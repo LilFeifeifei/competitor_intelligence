@@ -1,0 +1,979 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>竞对情报中心</title>
+<style>
+:root{--bg:#fff;--card:#fff;--text:#1d1d1f;--muted:#86868b;--light:#a1a1a6;--border:#e8e8ec;--accent:#7a8fa3;--blue:#7a8fa3;--shadow:0 1px 3px rgba(0,0,0,0.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Inter","PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:var(--text);line-height:1.6;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:16px}
+
+/* TOP NAVIGATION - centered, clean, no dividers */
+.top-nav{background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:0 24px;height:52px;flex-shrink:0;z-index:10;gap:8px}
+.top-nav-item{display:flex;align-items:center;gap:6px;padding:8px 20px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;border-radius:8px}
+.top-nav-item:hover{color:var(--text);background:rgba(0,0,0,0.03)}
+.top-nav-item.active{color:#1d1d1f;font-weight:600;background:rgba(0,0,0,0.05)}
+.top-nav-right{position:absolute;right:24px;font-size:11px;color:var(--light)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.topbar{height:48px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:5}
+.topbar h2{font-size:15px;font-weight:600}
+.search-box{position:relative}.search-box input{background:#f8f9fc;border:1px solid var(--border);border-radius:6px;padding:6px 12px 6px 32px;font-size:13px;width:200px;outline:none;transition:border .2s}
+.search-box input:focus{border-color:var(--accent)}
+.search-box svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--light)}
+.content{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column}
+.view{display:none;animation:fadeIn .35s ease}.view.active{display:block;flex:1}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatBlob1{0%{transform:translate(-50%,-50%) scale(1) rotate(0deg);opacity:.6}33%{transform:translate(-45%,-55%) scale(1.08) rotate(5deg);opacity:.5}66%{transform:translate(-55%,-48%) scale(.95) rotate(-3deg);opacity:.55}100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);opacity:.6}}
+@keyframes floatBlob2{0%{transform:translate(-50%,-50%) scale(.9) rotate(0deg);opacity:.4}50%{transform:translate(-52%,-45%) scale(1.05) rotate(-8deg);opacity:.35}100%{transform:translate(-50%,-50%) scale(.9) rotate(0deg);opacity:.4}}
+@keyframes floatBlob3{0%{transform:translate(-50%,-50%) scale(1.1) rotate(0deg);opacity:.3}50%{transform:translate(-48%,-52%) scale(.95) rotate(6deg);opacity:.25}100%{transform:translate(-50%,-50%) scale(1.1) rotate(0deg);opacity:.3}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}
+.card{background:var(--card);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-hover{cursor:pointer;transition:border-color .15s}.card-hover:hover{border-color:#c0c4c8}
+.sec-title{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:16px;font-weight:600;color:#1d1d1f}
+.sec-title .icon{width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,#6366f1,#818cf8)}
+.sec-title .line{flex:1;height:1px;background:#e5e7eb}
+.view.active.ov-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10vh 0 5vh;position:relative;background:#faf8fc}
+.ov-wrap::before{content:"";position:absolute;top:50%;left:50%;width:650px;height:450px;background:radial-gradient(ellipse,rgba(232,218,239,0.55) 0%,rgba(218,232,245,0.45) 30%,rgba(245,232,218,0.35) 60%,transparent 80%);border-radius:50%;pointer-events:none;filter:blur(30px);animation:floatBlob1 12s ease-in-out infinite;z-index:0}
+.ov-wrap::after{content:"";position:absolute;top:45%;left:55%;width:550px;height:400px;background:radial-gradient(ellipse,rgba(218,232,245,0.45) 0%,rgba(232,218,239,0.35) 50%,transparent 75%);border-radius:50%;pointer-events:none;filter:blur(40px);animation:floatBlob2 15s ease-in-out infinite;z-index:0}
+.ov-wrap .bg-blob{position:absolute;top:55%;left:42%;width:500px;height:420px;background:radial-gradient(ellipse,rgba(245,232,218,0.35) 0%,rgba(218,239,228,0.25) 50%,transparent 75%);border-radius:50%;pointer-events:none;filter:blur(35px);animation:floatBlob3 18s ease-in-out infinite;z-index:0}
+.ov-wrap .bg-blob2{position:absolute;top:40%;left:58%;width:480px;height:400px;background:radial-gradient(ellipse,rgba(232,218,228,0.3) 0%,rgba(218,228,232,0.2) 50%,transparent 75%);border-radius:50%;pointer-events:none;filter:blur(38px);animation:floatBlob2 20s ease-in-out infinite reverse;z-index:0}
+.ov-title{font-size:28px;font-weight:700;color:#1d1d1f;margin-bottom:24px;letter-spacing:-0.5px;position:relative;z-index:3}
+.ov-search{position:relative;width:420px;max-width:88vw}
+.ov-search input{width:100%;padding:14px 20px 14px 46px;background:#fff;border:1px solid var(--border);border-radius:28px;font-size:14px;color:#1d1d1f;outline:none;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:box-shadow .2s}
+.ov-search input:focus{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.ov-search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--light)}
+.track-section{margin-bottom:24px}.track-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.comp-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;transition:border-color .15s;position:relative}
+.comp-card:hover{border-color:#c0c4c8}.comp-name{font-size:14px;font-weight:600;color:var(--text)}
+.comp-tbd{font-size:11px;color:var(--light);margin-top:4px}
+.prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+.domain-header{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:12px;border:1px solid #f0f0f5;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.domain-header h2{font-size:18px;font-weight:600;margin-bottom:6px}.domain-header p{font-size:13px;color:#6b7280}
+
+/* Section cards - clean light backgrounds */
+.section-card{border-radius:12px;padding:18px 22px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid #f0f0f5}
+.section-card.news{background:#fafbfc}
+.section-card.iteration{background:#f8faf8}
+.section-card.insights{background:#faf8fc}
+.section-card.diff{background:#f8f9fc}
+.section-card.finance{background:#fcfaf8}
+.section-card.quadrant{background:#fff}
+.section-card.architecture{background:#fdfcfb}
+
+/* Quadrant - dreamy pastel gradient zones */
+.quadrant-wrap{position:relative;width:100%;max-width:700px;margin:0 auto;aspect-ratio:1.3;background:linear-gradient(160deg,#fefefe 0%,#f8f9ff 50%,#fefefe 100%);border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.06)}
+.quadrant-wrap::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 49px,rgba(200,200,220,0.15) 49px,rgba(200,200,220,0.15) 50px),repeating-linear-gradient(90deg,transparent,transparent 49px,rgba(200,200,220,0.15) 49px,rgba(200,200,220,0.15) 50px);pointer-events:none;opacity:0.5}
+.quadrant-bg{position:absolute;inset:48px 48px 48px 58px}
+.quadrant-bg .zone-bg{position:absolute;width:50%;height:50%;transition:all .3s}
+.quadrant-bg .zone-bg.ztl{top:0;left:0;background:linear-gradient(135deg,rgba(232,218,239,0.6) 0%,rgba(220,210,235,0.3) 60%,rgba(210,200,225,0.1) 100%);border-right:1px solid rgba(180,160,200,0.2);border-bottom:1px solid rgba(180,160,200,0.2)}
+.quadrant-bg .zone-bg.ztr{top:0;right:0;background:linear-gradient(225deg,rgba(218,228,239,0.6) 0%,rgba(200,215,230,0.3) 60%,rgba(190,205,220,0.1) 100%);border-bottom:1px solid rgba(160,180,200,0.2)}
+.quadrant-bg .zone-bg.zbl{bottom:0;left:0;background:linear-gradient(45deg,rgba(218,239,228,0.6) 0%,rgba(200,230,220,0.3) 60%,rgba(190,220,210,0.1) 100%);border-right:1px solid rgba(160,200,180,0.2)}
+.quadrant-bg .zone-bg.zbr{bottom:0;right:0;background:linear-gradient(315deg,rgba(239,228,218,0.6) 0%,rgba(230,220,200,0.3) 60%,rgba(220,210,190,0.1) 100%)}
+.quadrant-bg .grid-x,.quadrant-bg .grid-y{position:absolute;background:linear-gradient(90deg,transparent,rgba(180,180,200,0.25),transparent);z-index:3}
+.quadrant-bg .grid-x{left:0;right:0;top:50%;height:1px}
+.quadrant-bg .grid-y{top:0;bottom:0;left:50%;width:1px;background:linear-gradient(180deg,transparent,rgba(148,163,184,0.3),transparent)}
+.zone-label{position:absolute;font-size:13px;font-weight:700;color:#374151;z-index:5;line-height:1.3;letter-spacing:0.5px}
+.zone-label .z-sub{font-size:11px;font-weight:500;color:#6b7280;display:block;margin-top:2px;letter-spacing:0}
+.zone-tl{top:10px;left:12px}.zone-tr{top:10px;right:12px;text-align:right}.zone-bl{bottom:10px;left:12px}.zone-br{bottom:10px;right:12px;text-align:right}
+.axis-x,.axis-y{position:absolute;z-index:4}.axis-x{left:0;right:0;top:50%;height:1px;background:linear-gradient(90deg,rgba(180,180,200,0.1),rgba(180,180,200,0.3),rgba(180,180,200,0.1))}.axis-y{top:0;bottom:0;left:50%;width:1px;background:linear-gradient(180deg,rgba(180,180,200,0.1),rgba(180,180,200,0.3),rgba(180,180,200,0.1))}
+.axis-name{position:absolute;font-size:11px;color:#6b7280;font-weight:600;letter-spacing:0.5px}
+.axis-x-name{bottom:10px;left:50%;transform:translateX(-50%)}.axis-y-name{left:8px;top:50%;transform:translateY(-50%) rotate(-90deg);transform-origin:left center}
+.axis-end{position:absolute;font-size:10px;color:#9ca3af;opacity:0.8;letter-spacing:0.3px}
+.x-left{bottom:10px;left:0}.x-right{bottom:10px;right:0}.y-bottom{left:6px;bottom:0}.y-top{left:6px;top:0}
+.company-dot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;transition:transform .2s}
+.company-dot:hover{transform:translate(-50%,-50%) scale(1.05)}
+.dot-circle{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 6px 20px rgba(138,96,112,0.3),0 2px 6px rgba(0,0,0,0.1),0 0 0 4px rgba(255,255,255,0.6),0 0 0 6px rgba(138,96,112,0.1)}
+.dot-label{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;white-space:nowrap;color:#3a3632;text-shadow:0 1px 2px rgba(255,255,255,0.8)}
+.dot-sub{position:absolute;top:calc(100% + 24px);left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;color:#7a7672;max-width:140px;text-align:center;line-height:1.4}
+.dot-tooltip{position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%);background:#fff;color:var(--text);border-radius:14px;padding:14px 18px;min-width:260px;opacity:0;pointer-events:none;transition:opacity .25s;font-size:12px;line-height:1.6;z-index:100;box-shadow:0 12px 32px rgba(0,0,0,0.12);border:1px solid #e8e6e4}
+.company-dot:hover .dot-tooltip{opacity:1}
+.tooltip-title{font-weight:700;margin-bottom:6px;font-size:13px;color:#3a3632}.tooltip-desc{color:#6a6662;font-size:11.5px}
+.anatomy-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.anatomy-tab{padding:8px 18px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;background:#f8f9fc;border:1px solid var(--border)}
+.anatomy-tab.active{background:var(--text);color:#fff;border-color:transparent}
+.anatomy-panel{display:none}.anatomy-panel.active{display:block}
+/* Architecture flow - compact and visually prominent */
+.arch-flow{display:flex;flex-direction:column;gap:0}
+.flow-layer{display:flex;gap:10px;align-items:stretch}
+.flow-label{width:60px;flex-shrink:0;font-size:11px;color:#6366f1;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center}
+.flow-content{flex:1;display:flex;gap:0}
+.flow-box{flex:1;background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #c7d2fe;box-shadow:0 1px 3px rgba(99,102,241,0.08)}
+.flow-box .ftitle{font-size:13px;font-weight:600;color:#4f46e5;margin-bottom:4px;text-align:center}
+.flow-box .fdesc{font-size:12px;color:#6b7280;line-height:1.5}
+.flow-box.core{border-color:#6366f1;background:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.12)}
+.flow-arrow{display:flex;align-items:center;padding-left:70px;height:16px}
+.flow-arrow-inner{flex:1;display:flex;justify-content:center;align-items:center;color:#6366f1;font-size:14px;font-weight:700}
+.back-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--blue);cursor:pointer;margin-bottom:14px;font-weight:500}
+.core-table-wrap{margin-bottom:20px}.core-table-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.core-table-head .ct-icon{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 6px rgba(99,102,241,0.2)}
+.core-table-head .ct-title{font-size:14px;font-weight:600}.core-table-head .ct-count{font-size:12px;color:var(--light)}
+.core-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow)}
+.core-table thead th{background:linear-gradient(135deg,#f8f9fc,#f0f0f5);color:#4a4a5a;font-weight:600;text-align:left;padding:12px 16px;border-bottom:2px solid var(--border);font-size:12px;white-space:nowrap}
+.core-table tbody td{padding:12px 14px;border-bottom:1px solid #f0f1f5;vertical-align:top}.core-table tbody tr:hover td{background:#fafbfc}
+.core-table tbody tr:last-child td{border-bottom:none}.core-table td:first-child{color:var(--light);font-size:12px;white-space:nowrap}
+.core-table .ct-news{line-height:1.6;cursor:pointer}.core-table .ct-news:hover{color:var(--blue)}
+.core-table .ct-link{color:var(--blue);text-decoration:none;font-size:12px;display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.core-table .ct-link:hover{text-decoration:underline}
+
+/* Morandi tag colors */
+.tag-stage{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:500;white-space:nowrap}
+.tag-stage-lp{background:#f0e6d8;color:#8a7060}.tag-stage-cv{background:#dce8dc;color:#5a7a5a}.tag-stage-wp{background:#e8e4e0;color:#7a7a74}.tag-stage-na{background:#e4e4e8;color:#8a8a8e}
+
+/* Brief cards - no colored side borders */
+.tl-prod{margin-bottom:16px}.tl-prod h4{font-size:14px;font-weight:700;padding-bottom:6px;border-bottom:1px dashed #e0e2e8;margin-bottom:8px}
+.tl-bar{display:flex;align-items:center;margin-bottom:10px;padding:0 4px}.tl-step{flex:1;text-align:center;position:relative;padding-top:22px}
+.tl-step::before{content:"";position:absolute;top:2px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#d0d4e0;border:3px solid #fff;box-shadow:0 0 0 3px #d0d4e0;z-index:2}
+.tl-step::after{content:"";position:absolute;top:9px;left:50%;right:-50%;height:2px;background:#e8eaf0;z-index:1}.tl-step:last-child::after{display:none}
+.tl-step.on::before{background:#ef4444;box-shadow:0 0 0 3px #ef4444}.tl-step.on::after{background:#ef4444}
+.tl-step.done::before{background:#1d1d1f;box-shadow:0 0 0 3px #1d1d1f}.tl-step.done::after{background:#1d1d1f}
+.tl-step.unknown::before{background:#fff;border:2px dashed #d0d4e0;box-shadow:0 0 0 2px #d0d4e0}.tl-step.unknown::after{background:#e8eaf0}
+.tl-step .tl-lbl{font-size:10px;color:var(--light);margin-top:3px}.tl-step.on .tl-lbl{color:#ef4444;font-weight:600;font-size:11px}.tl-step.done .tl-lbl{color:#1d1d1f;font-weight:500;font-size:11px}.tl-step.unknown .tl-lbl{color:var(--light);font-size:11px}
+.tl-note{background:#fff;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:12px;color:#6b7280;border:1px solid #e5e7eb}.tl-note strong{color:#1d1d1f}
+.tl-prod{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:12px}
+.tl-prod h4{font-size:13px;font-weight:700;margin-bottom:10px;color:#1d1d1f}
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+.popup-overlay.active{display:flex}.popup{background:#fff;border-radius:16px;width:600px;max-height:85vh;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.15);animation:slideUp .3s ease;display:flex;flex-direction:column}
+.popup-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}.popup-header h3{font-size:15px;font-weight:600}
+.popup-close{background:none;border:none;font-size:20px;color:var(--light);cursor:pointer;padding:0 4px}
+.popup-body{padding:16px 20px;overflow-y:auto;font-size:13px;line-height:1.7}
+.popup-actions{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.popup-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:none}
+.popup-btn.copy{background:#1d1d1f;color:#fff}.popup-btn.copy:hover{background:#333}.popup-btn.link{background:#f0f0f5;color:var(--text)}.popup-btn.link:hover{background:#e8e8ec}
+.meta-row{display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.tag2{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:500;margin-right:4px}
+.tag2-blue{background:#d8dce4;color:#5a6a7a}.tag2-purple{background:#e0d8e0;color:#7a6a7a}.tag2-orange{background:#e8e0d8;color:#8a7060}.tag2-teal{background:#d8e4e0;color:#5a7a70}.tag2-green{background:#d8e4d8;color:#5a7a5a}.tag2-gray{background:#e4e4e8;color:var(--muted)}
+.copy-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-60px);background:#1d1d1f;color:#fff;padding:10px 24px;border-radius:24px;font-size:13px;font-weight:500;z-index:200;transition:transform .3s ease}
+.copy-toast.show{transform:translateX(-50%) translateY(0)}
+.kpi-pill{display:flex;align-items:center;gap:10px;padding:10px 22px;background:#fff;border-radius:24px;border:1px solid #f0f0f5;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,0.04)}.kpi-pill:hover{border-color:#e5e7eb;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.06)}.kpi-pill .kpi-num{font-size:24px;font-weight:700}
+.tbd-box{background:#f8f9fc;border-radius:10px;padding:40px;text-align:center;color:var(--light);font-size:13px;border:1px dashed var(--border);margin:16px 0}
+
+/* v2 新闻动态样式优化 - 标题和日期在同一行 */
+.news-cards{display:flex;flex-direction:column;gap:8px}
+.news-card{background:#fff;border-radius:8px;padding:10px 14px;border:1px solid var(--border);cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.news-card:hover{border-color:#c0c4c8}
+.news-card .nc-tag{font-size:10px;font-weight:600;white-space:nowrap;padding:3px 8px;border-radius:4px}
+.news-card .nc-tag-red{background:#f5e6e6;color:#8a5a5a}.news-card .nc-tag-blue{background:#e6e9f5;color:#5a6a7a}.news-card .nc-tag-green{background:#e6f5e6;color:#5a7a5a}.news-card .nc-tag-purple{background:#eee6f5;color:#6a5a7a}.news-card .nc-tag-orange{background:#f5eee6;color:#7a6a5a}.news-card .nc-tag-brown{background:#f5ebe6;color:#7a6a5a}.news-card .nc-tag-teal{background:#e6f5f5;color:#5a7a7a}.news-card .nc-tag-gray{background:#f0f0f0;color:#6a6a6a}
+.news-card .nc-title{font-size:13px;font-weight:600;color:var(--text);text-decoration:none;line-height:1.45;flex:1;min-width:200px}
+.news-card .nc-title:hover{color:var(--blue);text-decoration:underline}
+.news-card .nc-meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--light);white-space:nowrap}
+.news-card .nc-date{color:var(--muted);font-weight:500}
+
+/* 产品迭代周期 v2 - 更真实的阶段展示 + 里程碑 */
+.tl-milestone{display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-left:6px;vertical-align:middle;cursor:pointer;position:relative}
+.tl-milestone:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:4px 8px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:10}
+.tl-milestone.red{background:#ef4444}
+.tl-milestone.blue{background:#3b82f6}
+.tl-info-link{font-size:10px;color:var(--blue);text-decoration:none;margin-left:4px}
+.tl-info-link:hover{text-decoration:underline}
+
+/* ===== 竞品对比表（美化版Excel） ===== */
+.comp-table-wrap{overflow:auto;max-height:calc(100vh - 180px);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);background:#fff}
+.comp-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:980px}
+.comp-table thead th{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#f5f3f0,#ede9e4);color:#5a5652;font-weight:600;padding:14px 16px;text-align:left;border-bottom:2px solid #d8d4d0;white-space:nowrap;font-size:12px;letter-spacing:.5px}
+.comp-table tbody td{padding:12px 16px;border-bottom:1px solid #f0eeec;vertical-align:middle;color:#4a4642;font-size:13px}
+.comp-table .col-track{position:sticky;left:0;z-index:5;min-width:120px;font-weight:600;color:#5a5652;white-space:nowrap}
+.comp-table .col-name{position:sticky;left:120px;z-index:5;min-width:100px;font-weight:500}
+.comp-table thead th.col-track,.comp-table thead th.col-name{z-index:15}
+.comp-table .track-row{cursor:pointer;transition:opacity .15s}
+.comp-table .track-row:hover{opacity:.9}
+.comp-table .track-toggle{display:inline-block;width:18px;text-align:center;font-size:10px;margin-right:4px;color:#7a7068}
+.comp-table .comp-name-link{color:#1d1d1f;cursor:pointer;font-weight:600;transition:color .15s}
+.comp-table .comp-name-link:hover{color:var(--blue);text-decoration:underline}
+.comp-table .view-link{color:var(--blue);cursor:pointer;font-size:12px;font-weight:500;transition:color .15s}
+.comp-table .view-link:hover{text-decoration:underline}
+.comp-table .news-clip{font-size:12px;color:#6a6662;line-height:1.5;max-width:180px}
+.comp-table .news-clip .news-date{font-size:10px;color:#a09890;display:block;margin-bottom:2px}
+.comp-table .news-clip .news-title{font-size:12px;color:#5a5652;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.comp-table .badge-mkt{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:#e8e4e0;color:#7a7068}
+.comp-table .badge-funding{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:#e0e4e8;color:#5a6a7a}
+.comp-table .badge-scale{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:#e4e8e0;color:#5a7a5a}
+
+/* 产品赛道卡片 */
+.prod-card{position:relative;overflow:hidden;border:1px solid transparent;border-radius:12px;padding:20px;display:flex;flex-direction:column;transition:all .15s;cursor:pointer;min-height:180px}
+.prod-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+
+.prod-card .prod-name{font-size:18px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.prod-card .prod-meta{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.prod-card .prod-meta span{font-size:11px;padding:3px 10px;background:#f5f3f0;border-radius:6px;color:#5a5652}
+.prod-card .prod-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:8px;flex:1}
+
+
+
+/* 首页焦点卡片 */
+.focus-section{margin-top:8px}
+.focus-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.focus-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s;position:relative}
+.focus-card:hover{border-color:#c0c4c8;box-shadow:0 6px 20px rgba(0,0,0,0.08);transform:translateY(-2px)}
+.focus-card .focus-tag{display:inline-block;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:600;margin-bottom:12px;letter-spacing:.3px}
+.focus-card .focus-tag-blue{background:#eef2ff;color:#4f46e5}
+.focus-card .focus-tag-green{background:#f0fdf4;color:#15803d}
+.focus-card .focus-tag-orange{background:#fff7ed;color:#c2410c}
+.focus-card .focus-tag-red{background:#fef2f2;color:#dc2626}
+.focus-card .focus-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.5}
+.focus-card .focus-impact{font-size:13px;color:#6a6662;line-height:1.7;margin-bottom:14px}
+.focus-card .focus-footer{display:flex;align-items:center;justify-content:space-between}
+.focus-card .focus-date{font-size:11px;color:#a09890}
+.focus-card .focus-action{font-size:12px;color:var(--blue);font-weight:600}
+
+/* 首页搜索优化 */
+.ov-search-v2{position:relative;width:100%;max-width:640px;margin:0 auto 28px}
+.ov-search-v2 input{width:100%;padding:18px 28px 18px 56px;background:#fff;border:1.5px solid var(--border);border-radius:32px;font-size:15px;color:#1d1d1f;outline:none;box-shadow:0 4px 16px rgba(0,0,0,0.06);transition:all .25s}
+.ov-search-v2 input:focus{box-shadow:0 6px 24px rgba(0,0,0,0.1);border-color:#c0c4c8}
+.ov-search-v2 input::placeholder{color:#a0a0a8}
+.ov-search-v2 svg{position:absolute;left:20px;top:50%;transform:translateY(-50%);color:var(--light);width:18px;height:18px}
+
+.sec-help{font-size:14px;color:var(--light);cursor:pointer;margin-left:4px;transition:color .15s;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--light)}
+.sec-help:hover{color:var(--text);border-color:var(--text)}
+
+.tl-milestone-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-left:4px;vertical-align:middle;animation:breathe 2s ease-in-out infinite;cursor:pointer}
+.tl-milestone-dot:hover{transform:scale(1.8);opacity:1;animation:none}
+
+/* 里程碑事件列表 */
+.tl-events{margin-top:10px;display:flex;flex-direction:column;gap:6px;padding:0 4px}
+.tl-event{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#4a4642;text-decoration:none;transition:color .15s;padding:4px 8px;border-radius:6px}
+.tl-event:hover{color:var(--blue);background:#f8f9fc}
+.tl-event-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.tl-event-dot.blue{background:#3b82f6}
+.tl-event-dot.red{background:#ef4444}
+.tl-event-dot.gray{background:#a09890}
+.tl-event-date{font-size:11px;color:#a09890;white-space:nowrap;min-width:72px;flex-shrink:0;margin-top:1px}
+.tl-event-title{font-size:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.tl-event-title:hover{text-decoration:underline}
+
+@media(max-width:1024px){.comp-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.prod-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+@media(max-width:768px){body{flex-direction:column}.top-nav{padding:0 12px;overflow-x:auto}.top-nav-item{padding:6px 12px;white-space:nowrap}.content{padding:16px}.ov-search{width:92vw}.popup{width:92vw}.core-table thead th,.core-table tbody td{padding:10px 12px}}
+</style>
+</head>
+<body>
+<div class="top-nav">
+  <div class="top-nav-item active" data-view="overview" onclick="go('overview')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 首页</div>
+  <div class="top-nav-item" data-view="newslist" onclick="go('newslist')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> 竞对</div>
+  <div class="top-nav-item" data-view="products" onclick="go('products')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> 产品</div>
+  <div class="top-nav-right">数据更新于 2026-04 | v2版本</div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left"><h2 id="page-title">首页总览</h2></div>
+  </div>
+  <div class="content" id="mainContent"></div>
+</div>
+<div class="popup-overlay" id="popupOverlay" onclick="closePopup(event)">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="popup-header"><h3 id="popupTitle">动态详情</h3><button class="popup-close" onclick="closePopup()">&times;</button></div>
+    <div class="popup-body" id="popupBody"></div>
+  </div>
+</div>
+<div class="copy-toast" id="copyToast">已复制到剪贴板</div>
+<script>
+const trackNames={pim:'PIM',dam:'DAM',datamid:'数据中台',private:'私域',bi:'BI',pos:'POS',crm:'CRM',oms:'OMS'};
+const allCompanies=[
+  {name:'特赞',track:'dam',key:'tezign',listing:'未上市',scale:'178人（2024参保）',funding:'D1轮·2021.11',revenue:'—',share:'—',coreProduct:'企业级内容AI平台',source:'天眼查（参保）',sourceUrl:'https://www.tianyancha.com/steam/2350700936-257f'},
+  {name:'光云科技',track:'pim',listing:'科创板',scale:'2,143人',funding:'上市公司',revenue:'5.63亿（2025）',share:'—',coreProduct:'快麦ERP、深绘美工',source:'2025年报/证券之星',sourceUrl:'https://pdf.dfcfw.com/pdf/H2_AN202604241821565552_1.pdf?1777063140000.pdf'},
+  {name:'深绘智能',track:'pim',listing:'被收购（2021）',scale:'—',funding:'被收购',revenue:'—',share:'—',coreProduct:'商品数字化管理',source:'光云收购公告',sourceUrl:'https://static.cninfo.com.cn/finalpage/2021-01-14/1209095383.PDF'},
+  {name:'商派',track:'datamid',key:'shopex',listing:'未上市',scale:'86人（2024参保）',funding:'—',revenue:'—',share:'—',coreProduct:'DigiOS、PIM',source:'天眼查（参保）',sourceUrl:'https://www.tianyancha.com/steam/333241317-4ec4'},
+  {name:'伯俊软件',track:'datamid',listing:'未上市',scale:'1000+',funding:'B轮3亿·2021',revenue:'—',share:'—',coreProduct:'零售数字化中台',source:'伯俊官网',sourceUrl:'https://www.burgeon.cn/gybj/index.html?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiIzNzI0NmMxOWZjODg0ZDljLTAxZDE4MzI3M2IzMjcwM2YifQ%3D%3D'},
+  {name:'百秋尚美',track:'datamid',listing:'拟港股IPO',scale:'—',funding:'—',revenue:'15.87亿（2025）',share:'—',coreProduct:'Futail数字零售',source:'招股书/弗若斯特沙利文',sourceUrl:'https://finance.sina.com.cn/stock/relnews/cn/2026-05-07/doc-inhwzvzp5234545.shtml'},
+  {name:'百胜软件',track:'datamid',listing:'新三板已摘牌',scale:'87人（2024参保）',funding:'—',revenue:'2.98亿（2023）',share:'—',coreProduct:'百胜ERP',source:'新三板年报/天眼查',sourceUrl:'https://pdf.dfcfw.com/pdf/H2_AN202504281663865459_1.pdf?'},
+  {name:'汉得信息',track:'datamid',listing:'A股创业板',scale:'9,273人',funding:'上市公司',revenue:'34.15亿（2025）',share:'—',coreProduct:'产业数字化、AI中台',source:'2025年报',sourceUrl:'https://www.hand-china.com/news/16401.html'},
+  {name:'聚水潭',track:'datamid',listing:'港股（06687）',scale:'2,552人',funding:'上市公司',revenue:'11.42亿（2025）',share:'—',coreProduct:'电商ERP、WMS',source:'2025年报/同花顺',sourceUrl:'https://stockpage.10jqka.com.cn/HK6687/'},
+  {name:'旺店通',track:'datamid',listing:'未上市',scale:'5,000+人',funding:'D轮3.12亿美元·2021',revenue:'—',share:'—',coreProduct:'旺店通ERP',source:'公司官网/36氪',sourceUrl:'https://www.wangdian.cn/ask/48728/'},
+  {name:'云徙科技',track:'datamid',listing:'未上市',scale:'1,500+人',funding:'B轮3.5亿·2019',revenue:'—',share:'—',coreProduct:'数字双中台',source:'中华网/投资家',sourceUrl:'https://m.tech.china.com/hea/hea/20241209/202412091614051.html'},
+  {name:'通天晓',track:'datamid',listing:'未上市',scale:'300-400人',funding:'—',revenue:'—',share:'—',coreProduct:'WMS、OMS',source:'天眼查',sourceUrl:'https://www.tianyancha.com/company/6751131168'},
+  {name:'欧电云',track:'datamid',listing:'未上市',scale:'300-500人',funding:'B+轮亿级·2018',revenue:'—',share:'—',coreProduct:'全渠道业务中台',source:'安持资本/华为云',sourceUrl:'http://www.ants-vc.com/index.php?c=news&m=info&id=636'},
+  {name:'D1M',track:'private',listing:'未上市',scale:'~900人',funding:'A轮1亿·2018',revenue:'—',share:'—',coreProduct:'品牌数字零售',source:'脉脉/爱企查',sourceUrl:'https://maimai.cn/article/detail?fid=717842532'},
+  {name:'有赞',track:'private',listing:'港股（08083）',scale:'1,509人（2025.6）',funding:'上市公司',revenue:'14.87亿（2025）',share:'—',coreProduct:'有赞微商城',source:'2025年报',sourceUrl:'https://finance.sina.cn/hkstock/gsxw/2026-03-12/detail-inhqtqkp4745178.d.html'},
+  {name:'微盟',track:'private',listing:'港股（02013）',scale:'3,400人（2025.6）',funding:'上市公司',revenue:'15.92亿（2025）',share:'—',coreProduct:'微盟WAI、SaaS',source:'2025年报',sourceUrl:'https://news.qq.com/rain/a/20260317A071D400'},
+  {name:'联蔚数科',track:'private',listing:'曾拟A股IPO（2023终止）',scale:'309人（2024参保）',funding:'—',revenue:'—',share:'—',coreProduct:'数字营销、CRM',source:'财联社/天眼查',sourceUrl:'https://baike.baidu.com/item/%E4%B8%8A%E6%B5%B7%E8%81%94%E8%94%9A%E6%95%B0%E5%AD%97%E7%A7%91%E6%8A%80%E9%9B%86%E5%9B%A2%E8%82%A1%E4%BB%BD%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8/63096564'},
+  {name:'驿氪',track:'private',listing:'未上市',scale:'200-300人',funding:'B轮2000万美元·2017',revenue:'—',share:'—',coreProduct:'EZR平台',source:'百度知道',sourceUrl:''},
+  {name:'帆软',track:'bi',listing:'未上市（不融资）',scale:'2,000+人',funding:'—',revenue:'—',share:'—',coreProduct:'FineBI、FineReport',source:'帆软官网',sourceUrl:'https://www.finereport.com/company/'},
+  {name:'瓴羊',track:'bi',listing:'阿里全资',scale:'1,000+人',funding:'阿里全资',revenue:'—',share:'—',coreProduct:'瓴羊One、DaaS',source:'瓴羊官网',sourceUrl:'https://www.lydaas.com/about'},
+  {name:'观远数据',track:'bi',listing:'未上市',scale:'500-800人',funding:'C轮2.8亿·2022',revenue:'—',share:'—',coreProduct:'观远BI',source:'观远官网',sourceUrl:'https://www.guandata.com/blogdetail/xixun_0115'},
+  {name:'QuickBI',track:'bi',listing:'阿里云产品',scale:'—',funding:'阿里云产品',revenue:'—',share:'—',coreProduct:'Quick BI',source:'阿里云官网',sourceUrl:'https://www.aliyun.com/product/quick-bi'},
+  {name:'安客诚',track:'bi',listing:'IPG集团收购',scale:'500+人（中国）',funding:'被收购',revenue:'—',share:'—',coreProduct:'全域消费者洞察',source:'百度百科/安客诚官网',sourceUrl:'https://www.acxiom.com.cn/'},
+  {name:'GrowingIO',track:'bi',listing:'未上市',scale:'300-500人',funding:'C2轮近亿·2022',revenue:'—',share:'—',coreProduct:'DataSimba',source:'亿欧/官网',sourceUrl:'https://www.iyiou.com/news/202405291068047'},
+  {name:'神策数据',track:'bi',listing:'未上市',scale:'800-1200人',funding:'D轮2亿美元·2022.5',revenue:'—',share:'—',coreProduct:'神策分析',source:'神策官网',sourceUrl:'https://www.sensorsdata.cn/'},
+
+  {name:'滴普科技',track:'bi',listing:'港股（01384）',scale:'—',funding:'上市公司',revenue:'4.15亿（2025）',share:'—',coreProduct:'FastAGI',source:'2025年报',sourceUrl:'https://baijiahao.baidu.com/s?id=1860174555645250627'},
+  {name:'TalkingData',track:'bi',listing:'未上市',scale:'29人（2024参保）',funding:'1亿美元·2022.1',revenue:'—',share:'—',coreProduct:'移动数据服务',source:'企查查/新浪股吧',sourceUrl:'https://www.qcc.com/crun/801d33a32b7f99457d2504d23a691447'},
+  {name:'Cegid',track:'pos',listing:'法国上市',scale:'全球5000+人',funding:'上市公司',revenue:'—',share:'—',coreProduct:'Cegid Retail Y2',source:'百度百科/Cegid官网',sourceUrl:'https://baike.baidu.com/item/%E6%96%BD%E6%98%93%E5%BE%B7%E8%BD%AF%E4%BB%B6%EF%BC%88%E6%B7%B1%E5%9C%B3%EF%BC%89%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8/19162928'},
+  {name:'秉坤科技',track:'pos',listing:'未上市',scale:'89人（2025参保）',funding:'B轮9000万·2018.7',revenue:'—',share:'—',coreProduct:'智慧零售POS',source:'天眼查/36氪',sourceUrl:'https://www.tianyancha.com/steam/378056962-4827'},
+  {name:'富基融通',track:'pos',listing:'被石基信息收购',scale:'—',funding:'被收购',revenue:'—',share:'—',coreProduct:'零售信息系统',source:'石基信息公告',sourceUrl:''},
+  {name:'数云',track:'crm',listing:'未上市',scale:'800-1200人',funding:'D1轮近亿·2023.11',revenue:'—',share:'—',coreProduct:'全渠道消费者运营',source:'腾讯新闻',sourceUrl:'https://news.qq.com/rain/a/20231110A0AJ8Q00'},
+  {name:'驰骛科技',track:'crm',listing:'未上市',scale:'293人（2024）',funding:'A轮超1亿·2021',revenue:'—',share:'—',coreProduct:'CDP、营销自动化',source:'天眼查/大众时报',sourceUrl:'https://www.tianyancha.com/company/2350477577'},
+  {name:'Arvato',track:'crm',listing:'贝塔斯曼集团',scale:'全球7万+人',funding:'集团内部',revenue:'—',share:'—',coreProduct:'CRM、IT服务',source:'百度百科',sourceUrl:'https://baike.baidu.com/item/%E8%B4%9D%E5%A1%94%E6%96%AF%E6%9B%BC%E9%9B%86%E5%9B%A2/5401080'},
+  {name:'Salesforce',track:'crm',listing:'纽交所',scale:'76,453人',funding:'上市公司',revenue:'378.95亿美元（2025）',share:'—',coreProduct:'Sales Cloud',source:'2025财年财报',sourceUrl:'https://www.fortunechina.com/global500/861/2025'},
+  {name:'群脉SCRM',track:'crm',listing:'未上市',scale:'300-500人',funding:'A轮数千万·2020',revenue:'—',share:'—',coreProduct:'群脉SCRM',source:'群脉官网',sourceUrl:'https://www.maiscrm.com/news/10084.html'}
+];
+const DB={
+  months:["2026-04"],currentMonth:"2026-04",
+  companies:{
+    tezign:{name:"特赞",en:"Tezign",color:"#b08090",site:"https://www.tezign.com",period:"2026-01-01 至 2026-04-22",summary:"2026年1月起密集发布AI相关内容，3月27日正式发布GEA企业级智能体，拆分六大业务模块。4月新签1家消费品客户（国际零食品牌），联合中欧商学院发布《AI时代的商业进化蓝图（2026）》白皮书。",stats:{product:8,client:1,signal:5},coreCount:6,historicalClients:[{name:"国际零食品牌",date:"2026.04",brief:"GEA接管其产品创新流程",industry:"消费品"}]},
+    leqee:{name:"乐其集团",en:"Leqee",color:"#3b82f6",site:"https://www.leqee.com",period:"2026-03-02 至 2026-04-24",summary:"乐其集团2026年Q1密集斩获平台侧认证（天猫六星服务商、阿里妈妈四项大奖、天猫金婴奖10项），AI选品中心入选浙江省电商选品中心名单获政策背书，3月新签医疗健康行业客户（艾来茵集团）。平台认证密度高，但公开客户案例仅1条。",stats:{product:1,client:1,signal:2},coreCount:7,historicalClients:[{name:"艾来茵集团",date:"2026.03",brief:"医疗健康行业深度合作",industry:"医疗健康"}]},
+    shopex:{name:"商派",en:"ShopEx",color:"#f59e0b",site:"https://www.shopex.cn",period:"2026-01-01 至 2026-04-28",summary:"2026年1-4月商派密集输出产品能力与标杆客户案例。1月完成晶科能源海外B2B分销平台交付；2月菲仕兰中台项目顺利验收。4月密集发布OMS+AI战略升级、PIM数据新地基、库存中心动态状态流等产品策略，发布《2026年品牌企业AI转型全景指南》。与汇付天下共建「斗門」全球支付智能编排中心。",stats:{product:3,client:2,signal:2},coreCount:7,historicalClients:[{name:"苹果中国",date:"—",brief:"标杆客户",industry:"消费电子"},{name:"雀巢",date:"—",brief:"标杆客户",industry:"快消"},{name:"玛氏",date:"—",brief:"标杆客户",industry:"快消"},{name:"LVMH",date:"—",brief:"标杆客户",industry:"奢侈品"},{name:"lululemon",date:"—",brief:"标杆客户",industry:"运动零售"},{name:"始祖鸟",date:"—",brief:"标杆客户",industry:"户外"},{name:"晶科能源",date:"2026.01",brief:"海外B2B分销平台交付",industry:"光伏能源"},{name:"菲仕兰",date:"2026.02",brief:"数智化中台项目验收",industry:"乳制品"}]}
+  },
+  domains:{pim:{name:"PIM",desc:"产品信息管理、商品主数据、AI产品库与多渠道铺货"},dam:{name:"DAM",desc:"数字资产管理、AI素材生成、品牌内容中台"},datamid:{name:"数据中台",desc:"产品信息、数字资产、AI智能体等企业级数据中台能力"},private:{name:"私域",desc:"内容营销、社媒增长、私域运营与KOL协作"},bi:{name:"BI",desc:"商业智能、AI选品、数据驱动决策"},pos:{name:"POS",desc:"支付生态、门店收银、全球分账"},crm:{name:"CRM",desc:"客户关系管理、平台服务商认证与运营"},oms:{name:"OMS",desc:"全渠道订单管理、库存中心、履约中台"}},
+  news:[
+    // ========== 特赞 GEA 概念期+预热期（2026-01 ~ 2026-03）==========
+    {id:101,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-04",tag:"行业洞察",title:"2026 年，企业人工智能的三个判断",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728666&idx=1&sn=d87ca4621035047019e9bb649095c3e6&chksm=bf1ef0198b3c818d5e29e19aac6e0681ca97f47146d080531437089467a12c28d0961e4dd3c7&scene=27#wechat_redirect",brief:"范凌发布2026年企业AI三大判断：1）AI从Copilot走向Agentic；2）企业上下文成为核心壁垒；3）行业Know-how重新定价。",stage:"—",industry:"—",tag:"行业洞察",important:true},
+    {id:102,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-05",tag:"技术更新",title:"什么是 Reasoning？为什么它正在成为企业 AI 的前置条件",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728681&idx=1&sn=00eb253381a5aff0bfbdfd6463b8e7de&chksm=bf705a456532473d1cbe13169b3347e18617d7367e4be01f9532e10f94aeeebfd5ce3e782368&scene=27#wechat_redirect",brief:"Reasoning（推理能力）是Agentic AI的基础，特赞将Reasoning能力嵌入GEA各模块。",stage:"—",industry:"—",tag:"技术更新"},
+    {id:103,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-10",tag:"行业洞察",title:"Seedance 2.0时代，如何让好的叙事规模化放大？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728736&idx=1&sn=f91c277ff6e6d7b79e3624df84756b54&chksm=bfd9cede437ff7215d3dd444f7fc8f378c6bf64d8284928aef5ec4788bc74ab1f730d61d351d&scene=27#wechat_redirect",brief:"多模态内容生成成为企业内容中台标配能力，MuseDAM支持Seedance 2.0集成。",stage:"—",industry:"—",tag:"行业洞察"},
+    {id:104,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-11",tag:"行业洞察",title:"上下文、Proactive Agent、Skills、Full Stack...企业 AI 的分水岭，在这 1 小时对话里",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728739&idx=1&sn=a4103457047904f96bcca513ec665af8&chksm=bfcc61566f3de82d0fc6b010e7d880f06d174d1e2c08602d09c286568743d49fc7a7d5df2573&scene=27#wechat_redirect",brief:"范凌与行业专家深度对话，定义企业AI分水岭：从工具到智能体的跨越。",stage:"—",industry:"—",tag:"行业洞察"},
+    {id:105,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-13",tag:"技术更新",title:"上下文图谱（Context Graph），才是打开企业Agentic 模式的「开关」",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728782&idx=1&sn=8306ca9b58d2b471d15de448bbeeb665&chksm=bfc82f2de29d58d963d6bf53a4735240e18573e64c64763db4d6165304e68e4e9926e28fe857&scene=27#wechat_redirect",brief:"Context Graph（上下文图谱）技术首发，为企业Agent提供结构化知识底座。",stage:"—",industry:"—",tag:"技术更新"},
+    {id:106,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-14",tag:"行业洞察",title:"10个信号，看见企业AI的趋势 | 年度特辑",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728808&idx=1&sn=56ed8bc7315702521245562dbd998002&chksm=bf194b07ea751f2b8f640a41b78937a0c02a4c07dfdf5416f3f0ea494bcfe86cc0300eeca8b5&scene=27#wechat_redirect",brief:"梳理2026年企业AI十大趋势信号，为GEA发布做舆论铺垫。",stage:"—",industry:"—",tag:"行业洞察"},
+    {id:107,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-02-24",tag:"技术更新",title:"人人谈论的 Skills，企业级AI应用中它「不能」做什么？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728809&idx=1&sn=f68d8d752da31e69fcc067ee60e679a9&chksm=bf62119cb3d4459bcd3f60bff52a73363bc440a7a71e274d336492f12668163d35f516993f72&scene=27#wechat_redirect",brief:"Skills架构澄清：企业AI的Skills不等于消费级AI的插件，需要深度业务对齐。",stage:"—",industry:"—",tag:"技术更新"},
+    {id:108,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid","private"],date:"2026-03-03",tag:"新产品发布",title:"当社媒矩阵越铺越大，品牌如何把「爆款逻辑」升级为企业级的智能体系统（Generative Enterprise Agent）？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728836&idx=1&sn=c647de6ec937d92ff7fe85b5b2158c5f&chksm=bf3f119a03be0a2dc6ba8245259e2ca029ad2175d96410a54e1006afffa4d37a4b2acc3f3ad8&scene=27#wechat_redirect",brief:"GEA社媒增长模块预热，定义「企业级社媒智能体」新品类。",stage:"—",industry:"—",tag:"新产品发布"},
+    {id:109,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-06",tag:"技术更新",title:"从被动响应到主动干活，智能体的设计趋势（Agent Design）",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728846&idx=1&sn=4f4c7a465c19f7edeb5a4f8d364b1265&chksm=bfbc3e2fa415d3784b6de392a24d5754314fe6447c920bc19cdd190b5b2cc7267154b44c3b79&scene=27#wechat_redirect",brief:"Proactive Agent（主动型智能体）设计范式首发，GEA Claw架构预热。",stage:"—",industry:"—",tag:"技术更新"},
+    {id:110,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-09",tag:"技术更新",title:"通用智能体为何无法「通用」？智能体编排架构在企业中的关键作用",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728869&idx=1&sn=dce3b64e141e24f5aad612876c6dca7d&chksm=bfdfc2ef8cd7c951636c20f27bc158d7b0f1d7931fde657b8888586dfbd4253893f4cfba2061&scene=27#wechat_redirect",brief:"智能体编排（Orchestration）架构深度解读，为GEA技术发布做铺垫。",stage:"—",industry:"—",tag:"技术更新"},
+    {id:111,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-13",tag:"新产品发布",title:"「产品上新」跑不赢「市场变化」？企业级智能体系统GEA如何让产品创新形成持续进化的飞轮",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728924&idx=1&sn=849b32907ad061c40725ac44fdb7b9bb&chksm=bf0ede51dc2c5d4c8322b3948dd3629cfdf2253396333272110d7ab3428a5b159621012001e8&scene=27#wechat_redirect",brief:"GEA产品创新模块预热，定义「AI驱动产品创新飞轮」。",stage:"—",industry:"—",tag:"新产品发布"},
+    {id:112,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-16",tag:"行业动态",title:"央视曝光虚假GEO，市场洗牌！企业如何判断「投毒式 GEO」和「正规 GEO」？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728947&idx=1&sn=9b691911751d70493027c54883ed512c&chksm=bf44bb91b3df9acc25ae8be2198bc74418e8b6c540df991f203044d80a0701106759c223db91&scene=27#wechat_redirect",brief:"借央视曝光事件，特赞为GEA的GEO（生成引擎优化）能力做信任背书。",stage:"—",industry:"—",tag:"行业动态"},
+    {id:113,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-18",tag:"新产品发布",title:"产品定价不再是「静态的一次性决策」，企业级智能体（Generative Enterprise Agent）如何让定价能力持续进化？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728955&idx=1&sn=5df79e3a511eba36542fd4e1d3b4c2f4&chksm=bf47ea37848038ff59174dd382de0ff6f0410da5c7f1326cb9609cc1bf10ef8c5a589f33701b&scene=27#wechat_redirect",brief:"GEA定价智能体模块预热，AI动态定价能力率先发布。",stage:"—",industry:"—",tag:"新产品发布"},
+    {id:114,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-23",tag:"新产品发布",title:"企业级智能体GEA（Generative Enterprise Agent）发布会：步入 Agentic AI 时代",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728999&idx=1&sn=e1e066c67a2cb7561c72c4e1fe9878b8&chksm=bf13c4049868325b1cd95dbfaca4a89171512d21bcf4051af688696bee0d4a32c15939721d7b&scene=27#wechat_redirect",brief:"GEA发布会正式开启预热，宣布3月27日产品发布。",stage:"—",industry:"—",tag:"新产品发布"},
+    {id:115,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-25",tag:"新产品发布",title:"给AI装上「业务手感」，企业级智能体GEA 如何把销售经验变成企业资产",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729001&idx=1&sn=089c00da21c61284f2b422384ebdf319&chksm=bf948eee2410f642a71c227993fd013c9db486cb8c98c22f7a745af725d2372568991e771d8b&scene=27#wechat_redirect",brief:"GEA销售智能体模块预热，定义「销售经验资产化」。",stage:"—",industry:"—",tag:"新产品发布"},
+    // ========== 特赞 GEA 发布期（2026-03-27）==========
+    {id:1,category:"产品动态",month:"2026-04",company:"tezign",tag:"新产品发布",domains:["datamid"],date:"2026-03-27",title:"特赞发布企业级智能体GEA：让AI进入业务流程交付结果，企业级 Agentic AI 新范式",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729137&idx=1&sn=4c1c5fce4dab84f787d3eac015ee2df2&chksm=bf8cbbd16442eb2773b68e4a07438abe5f8d99fd1963bb2a63b9a48ecdc1f0679d55d4ec928e&scene=27#wechat_redirect",brief:"特赞发布GEA企业级智能体，覆盖销售/定价/产品创新/知识管理/用户洞察/社媒增长六大模块。",stage:"新签客户",industry:"—",tag:"新产品发布"},
+    {id:116,category:"产品动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-03-30",tag:"新产品发布",title:"一图看全 | 企业级智能体GEA（Generative Enterprise Agent）发布亮点",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729184&idx=1&sn=7615e4d42b172c760648235ba004ab76&chksm=bfd529b39ef7064b5d52204a111d8b2b90fcbe69e206f84cfda42480cf2c5e2a342b8b710001&scene=27#wechat_redirect",brief:"GEA发布亮点图解，六大模块一次性展示。",stage:"—",industry:"—",tag:"新产品发布"},
+    // ========== 特赞 GEA 功能落地+客户验证（2026-04）==========
+    {id:2,category:"新签客户",month:"2026-04",company:"tezign",tag:"新签客户",domains:["datamid"],date:"2026-04-16",title:"当节日营销不再只是一次campaign，GEA如何接管这家国际零食品牌的产品创新流程？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729417&idx=1&sn=c087cc71e62b8af9e67aa42189dadadb&chksm=bf22ce31982ab388bdd7a7ed5fa8c3b7802fc6bb649248af03d638e8cc568126f47622dd8f39&scene=27#wechat_redirect",brief:"GEA首个公开客户验证案例，切入消费品行业。",stage:"新签客户",industry:"消费品",tag:"新签客户"},
+    {id:3,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-04-11",tag:"行业合作",title:"特赞科技x中欧国际工商学院「AI+商业进化论：系统·闭环·智效」论坛成功举办，以 GEA 企业级智能体推动「智效」升级",source:"微信公众号",link:"https://mp.weixin.qq.com/s/ngMJTpJ7kKbKQ_ZHU5UDeQ",brief:"论坛成功举办，发布《AI时代的商业进化蓝图（2026）》白皮书，以GEA企业级智能体推动智效升级。",stage:"—",industry:"跨行业",partner:"中欧商学院",tag:"行业合作"},
+    {id:117,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-04-14",tag:"行业洞察",title:"从实践中来，企业 Agentic AI 时代的 20 个关键判断 | 中欧特赞人工智能与商业创新研究基金年度论坛观点",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729399&idx=1&sn=1306303cb9dd09eb4402a78a29d88ac1&chksm=bfcfe125f81309dc755f9f37550c8b62ab53ce8347112a692bfa125c6bdd5714642fde9c693b&scene=27#wechat_redirect",brief:"中欧特赞论坛观点汇总，20个关键判断定义企业Agentic AI时代。",stage:"—",industry:"—",tag:"行业洞察"},
+    {id:7,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-04-07",tag:"技术更新",title:"渐进式披露机制，使企业知识成为可被Agent调用和推理的「上下文」",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729283&idx=1&sn=166756ba621a588db4dadce84d7cdbff&chksm=bf2c4977b2934f10a1b43c642947e070eb701410a1086cec5cbebd1b62e346c52d19ec62ad6e&scene=27#wechat_redirect",brief:"技术架构升级，企业知识图谱与Agent编排深度整合。",stage:"—",industry:"—",tag:"技术更新"},
+    {id:118,category:"行业动态",month:"2026-04",company:"tezign",domains:["datamid"],date:"2026-04-01",tag:"技术更新",title:"Claude Code 源码泄露给企业什么启示？再谈 Harness Engineering",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729259&idx=1&sn=4be092d853224b70e3feb9e9106e10dc&chksm=bf670a672ebf061bba6165333eaa2c758bb75819fd28cca93f1140c9703150ddba9fb369cc3c&scene=27#wechat_redirect",brief:"借Claude Code开源事件，特赞输出企业AI工程化方法论。",stage:"—",industry:"—",tag:"技术更新"},
+    // ========== 特赞 MuseDAM（产品功能迭代，2026-01-14）==========
+    {id:4,category:"产品动态",month:"2026-04",company:"tezign",tag:"产品功能迭代",domains:["dam"],date:"2026-01-14",title:"MuseDAM：为什么企业需要AI原生的内容管理系统？",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728027&idx=1&sn=0f8f9911578ea5f9202361a28c738779&chksm=bf3e64aa89f84d89f2bea351a93713c752b8be968a30a1c3ffe3ba87e32b5cc18f1ca9b88096&scene=27#wechat_redirect",brief:"AI原生数字资产管理工具。官网显示已有1000+客户，为成熟独立产品。",stage:"客户验证",industry:"—",tag:"产品功能迭代"},
+    // ========== 商派 产品功能迭代+行业动态（2026-04）==========
+    {id:201,category:"产品动态",month:"2026-04",company:"shopex",domains:["datamid","oms"],date:"2026-04-21",tag:"产品功能迭代",title:"新一代OMS系统+AI能力发展趋势：从订单执行工具到全链路智能履约中枢",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895337&idx=3&sn=b6fddf4f9c2ab6f7acc7e021799d09a0&chksm=bc3c1c2de815e2133ff22ee5b91e07f0ebd6ce40ace4ef0d251f56b2812fc1ba5386df70e819&scene=27#wechat_redirect",brief:"商派DigiOS OMS升级为全链路智能履约中枢，核心定位从「执行者」转向「决策者+调度者」，承担全域订单统一管控、库存全局调度、履约路径最优规划职能。",stage:"功能落地",industry:"—",tag:"产品功能迭代"},
+    {id:202,category:"产品动态",month:"2026-04",company:"shopex",domains:["datamid","pim"],date:"2026-04-22",tag:"产品功能迭代",title:"OMS商品中心（PIM）成为企业AI的数据新地基！高质量商品数据为AI持续输送丰富「燃料」",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895345&idx=4&sn=ced0f69a1bd5369c2dd7a527d566778b&chksm=bc22029259c87e29f6f025f0e0cc05054d4682aa60b9406e69401d8017552911cf8419c2aebf&scene=27#wechat_redirect",brief:"商派将PIM定位为AI智能体平台的数据新地基，多维度标准化商品数据为AI提供干净、丰富、有逻辑的「燃料」。",stage:"功能落地",industry:"—",tag:"产品功能迭代"},
+    {id:203,category:"产品动态",month:"2026-04",company:"shopex",domains:["datamid","oms"],date:"2026-04-24",tag:"产品功能迭代",title:"库存管理驱动增长：商派OMS库存中心如何以「动态状态流」重塑全渠道零售确定性",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895375&idx=2&sn=0e35719c0d6b0553b010ee9df0497af3&chksm=bc2a901fb57086ad86df38803e71b8b5a81ff151b50de1e08f4972f4c083f66abb686ae2a08c&scene=27#wechat_redirect",brief:"商派OMS库存中心以动态状态流重构库存管理，实现全域一键铺货、业财一体化，支撑头部品牌构建全渠道数智化管理中枢。",stage:"功能落地",industry:"—",tag:"产品功能迭代"},
+    {id:204,category:"新签客户",month:"2026-04",company:"shopex",domains:["datamid"],date:"2026-01-31",tag:"新签客户",title:"海外B2B项目交付｜晶科能源海外数字分销平台正式上线，助力渠道全球化扩张！",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653894317&idx=2&sn=d7d5e4157f5eb71cb6d41e54f062349b&chksm=bcfb774455e1a459ff181f62c0968fe5cb927d3773fa45c432d85e6111439cd2d8bd04260fce&scene=27#wechat_redirect",brief:"商派为光伏龙头晶科能源搭建海外数字分销平台，助力渠道全球化扩张，标志商派B2B出海能力获得头部新能源企业认可。",stage:"新签客户",industry:"光伏能源",tag:"新签客户"},
+    {id:205,category:"新签客户",month:"2026-04",company:"shopex",domains:["datamid"],date:"2026-02-03",tag:"新签客户",title:"中台项目顺利验收，助力菲仕兰「客户服务能力大幅跃升+渠道库存大幅优化」！商派喜获客户感谢信",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653894372&idx=3&sn=b64c312bfb09db006d1fef296dc940b9&chksm=bc84f096d1a6b12ac1c9a15f0a11691bf0af8520aef99af742818623b948757bb42a9295a006&scene=27#wechat_redirect",brief:"商派与乳制品头部企业菲仕兰共同打造数智化中台项目顺利通过验收，客户服务能力大幅跃升，渠道库存大幅优化。",stage:"新签客户",industry:"乳制品",tag:"新签客户"},
+    {id:206,category:"行业动态",month:"2026-04",company:"shopex",domains:["datamid"],date:"2026-04-20",tag:"行业动态",title:"汇付天下全新发布「斗門」全球支付智能编排中心！商派ShopeX深度参与「生态共建」",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895316&idx=1&sn=568a51df2848c9f3281c68d717bfe0ef&chksm=bc5990f2db258dbd7d1c23be4292bc41fda34fd77d38a75148fb3ab058c83b42308436304b89&scene=27#wechat_redirect",brief:"商派作为生态共建伙伴深度参与汇付天下「斗門」全球支付智能编排中心发布，拓展支付生态合作版图。",stage:"—",industry:"—",tag:"行业动态"},
+    {id:207,category:"行业动态",month:"2026-04",company:"shopex",domains:["datamid"],date:"2026-04-24",tag:"行业动态",title:"《2026年品牌企业AI转型全景指南：从工具到战略中枢的范式跃迁》商派",source:"微信公众号",link:"http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895375&idx=3&sn=6337c7e4c83db900ce74d760a7e41e26&chksm=bcd6b9ee6e0aef6fd1edbe57b0cb697c777b3076e7c006eeefc7f2bc4c8574cc81f13ef22f73&scene=27#wechat_redirect",brief:"商派发布品牌企业AI转型全景指南，系统阐述从工具到战略中枢的范式跃迁路径，将PIM定位为「企业AI的数据新地基」。",stage:"—",industry:"—",tag:"行业动态"}
+  ],
+  briefs:{
+    tezign:`<div class="section-card iteration"><div class="sec-title"><div class="icon"></div><span>产品迭代周期</span><div class="line"></div></div><div class="tl-prod"><h4>GEA（企业级智能体平台）</h4><div class="tl-bar"><div class="tl-step done" onclick="openMilestonePopup('tezign-gea-发布GEA')"><div class="tl-lbl">发布 GEA<br><span style="font-size:10px;color:#a09890">2026-03-27</span></div></div><div class="tl-step on" onclick="openMilestonePopup('tezign-gea-签约国际零食品牌')"><div class="tl-lbl">签约国际零食品牌<br><span style="font-size:10px;color:#a09890">2026-04-16</span></div></div></div><div class="tl-note" style="margin-top:10px"><strong>当前状态：</strong>GEA 发布 1 个月，首个公开客户签约国际零食品牌，处于早期验证阶段。<br><br><strong>关键信息：</strong><br>• 官网：<a href="https://www.tezign.com/products" target="_blank" class="tl-info-link">tezign.com/products</a><br>• 六大模块：销售/定价/产品创新/知识管理/用户洞察/社媒增长</div></div><div class="tl-prod"><h4>MuseDAM（AI原生DAM）</h4><div class="tl-bar"><div class="tl-step on" onclick="openMilestonePopup('tezign-musedam-介绍MuseDAM产品价值')"><div class="tl-lbl">介绍 MuseDAM 产品价值<br><span style="font-size:10px;color:#a09890">2026-01-14</span></div></div></div><div class="tl-note" style="margin-top:10px"><strong>当前状态：</strong>成熟独立产品，官网显示 1000+ 客户，96% 复购率。<br><br><strong>关键信息：</strong><br>• 官网：<a href="https://www.musedam.cc/zh-CN" target="_blank" class="tl-info-link">musedam.cc/zh-CN</a></div></div></div>`,
+    shopex:`<div class="section-card iteration"><div class="sec-title"><div class="icon"></div><span>产品迭代周期</span><div class="line"></div></div><div class="tl-prod"><h4>DigiOS（全渠道OMS平台）</h4><div class="tl-bar"><div class="tl-step done" onclick="openMilestonePopup('shopex-digios-晶科能源海外B2B平台交付')"><div class="tl-lbl">晶科能源海外B2B平台交付<br><span style="font-size:10px;color:#a09890">2026-01-31</span></div></div><div class="tl-step done" onclick="openMilestonePopup('shopex-digios-菲仕兰中台项目验收')"><div class="tl-lbl">菲仕兰中台项目验收<br><span style="font-size:10px;color:#a09890">2026-02-03</span></div></div><div class="tl-step on" onclick="openMilestonePopup('shopex-digios-OMS库存中心动态状态流')"><div class="tl-lbl">OMS库存中心动态状态流<br><span style="font-size:10px;color:#a09890">2026-04-24</span></div></div></div><div class="tl-note" style="margin-top:10px"><strong>当前状态：</strong>成熟产品，已服务苹果、雀巢、LVMH、lululemon、始祖鸟等头部品牌。<br><br><strong>关键信息：</strong><br>• DigiOS官网：<a href="https://www.shopex.cn/products/digios" target="_blank" class="tl-info-link">shopex.cn/products/digios</a><br>• 核心能力：全渠道OMS、OMS库存中心、PIM商品中心</div></div><div class="tl-prod"><h4>PIM（智能商品中心）</h4><div class="tl-bar"><div class="tl-step on" onclick="openMilestonePopup('shopex-pim-PIM定位为AI数据新地基')"><div class="tl-lbl">PIM 定位为 AI 数据新地基<br><span style="font-size:10px;color:#a09890">2026-04-22</span></div></div></div><div class="tl-note" style="margin-top:10px"><strong>当前状态：</strong>新兴产品线，处于功能落地阶段，与OMS深度整合。<br><br><strong>关键信息：</strong><br>• 官网：<a href="https://www.shopex.cn" target="_blank" class="tl-info-link">shopex.cn</a><br>• 核心场景：智能PIM产品库、C2M柔性定制、AI数据新地基</div></div></div>`,
+  }
+};
+
+let currentView="overview",currentParam="",currentMonth="2026-04";
+const trackExpanded={};
+function toggleTrack(track){trackExpanded[track]=trackExpanded[track]===false?true:false;render();}
+const milestoneArticles={
+  'tezign-gea-发布GEA':[{date:'2026-03-27',title:'特赞发布企业级智能体GEA：让AI进入业务流程交付结果，企业级 Agentic AI 新范式',link:'http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729137&idx=1&sn=4c1c5fce4dab84f787d3eac015ee2df2&chksm=bf8cbbd16442eb2773b68e4a07438abe5f8d99fd1963bb2a63b9a48ecdc1f0679d55d4ec928e&scene=27#wechat_redirect'}],
+  'tezign-gea-签约国际零食品牌':[{date:'2026-04-16',title:'当节日营销不再只是一次campaign，GEA如何接管这家国际零食品牌的产品创新流程？',link:'http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729417&idx=1&sn=c087cc71e62b8af9e67aa42189dadadb&chksm=bf22ce31982ab388bdd7a7ed5fa8c3b7802fc6bb649248af03d638e8cc568126f47622dd8f39&scene=27#wechat_redirect'}],
+  'tezign-musedam-介绍MuseDAM产品价值':[{date:'2026-01-14',title:'MuseDAM：为什么企业需要AI原生的内容管理系统？',link:'http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728027&idx=1&sn=0f8f9911578ea5f9202361a28c738779&chksm=bf3e64aa89f84d89f2bea351a93713c752b8be968a30a1c3ffe3ba87e32b5cc18f1ca9b88096&scene=27#wechat_redirect'}],
+  'shopex-digios-晶科能源海外B2B平台交付':[{date:'2026-01-31',title:'海外B2B项目交付｜晶科能源海外数字分销平台正式上线，助力渠道全球化扩张！',link:'http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653894317&idx=2&sn=d7d5e4157f5eb71cb6d41e54f062349b&chksm=bcfb774455e1a459ff181f62c0968fe5cb927d3773fa45c432d85e6111439cd2d8bd04260fce&scene=27#wechat_redirect'}],
+  'shopex-digios-菲仕兰中台项目验收':[{date:'2026-02-03',title:'中台项目顺利验收，助力菲仕兰「客户服务能力大幅跃升+渠道库存大幅优化」！商派喜获客户感谢信',link:'http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653894372&idx=3&sn=b64c312bfb09db006d1fef296dc940b9&chksm=bc84f096d1a6b12ac1c9a15f0a11691bf0af8520aef99af742818623b948757bb42a9295a006&scene=27#wechat_redirect'}],
+  'shopex-digios-OMS库存中心动态状态流':[{date:'2026-04-24',title:'库存管理驱动增长：商派OMS库存中心如何以「动态状态流」重塑全渠道零售确定性',link:'http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895375&idx=2&sn=0e35719c0d6b0553b010ee9df0497af3&chksm=bccf3ddd05e21d28d261cec21825f60f3b253092346e2b81d87ded0b48c5290ff5e0b0737207&scene=27#wechat_redirect'}],
+  'shopex-pim-PIM定位为AI数据新地基':[{date:'2026-04-22',title:'OMS商品中心（PIM）成为企业AI的数据新地基！高质量商品数据为AI持续输送丰富「燃料」',link:'http://mp.weixin.qq.com/s?__biz=MjM5MTA4ODIzMg==&mid=2653895345&idx=4&sn=ced0f69a1bd5369c2dd7a527d566778b&chksm=bc3e6bc8dcd8bd837e4b5fc8448aeaf40551661759325f7f54f5df4a8bff425953f497ac1a47&scene=27#wechat_redirect'}]
+};
+function openMilestonePopup(key){
+  const articles=milestoneArticles[key];
+  if(!articles||!articles.length)return;
+  const parts=key.split('-');
+  const prod=parts.slice(1,-1).join('-');
+  const stage=parts[parts.length-1];
+  const prodName=prod==='gea'?'GEA':prod==='musedam'?'MuseDAM':prod==='digios'?'DigiOS':prod==='pim'?'PIM':prod;
+  let h=`<div style="line-height:1.8;font-size:13px;color:var(--text)"><div style="font-weight:700;margin-bottom:8px;font-size:14px">${prodName} · ${stage}</div><div style="font-size:12px;color:var(--muted);margin-bottom:14px;padding:8px 12px;background:#f8f9fc;border-radius:8px">以下关联新闻按<strong>时间顺序</strong>显示，共 ${articles.length} 条</div><div style="display:flex;flex-direction:column;gap:10px">`;
+  articles.forEach(a=>{
+    if(a.link){h+=`<a href="${a.link}" target="_blank" style="display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--text);padding:8px 10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background='#f8f9fc'" onmouseout="this.style.background='transparent'"><span style="font-size:11px;color:#a09890;white-space:nowrap;min-width:72px;flex-shrink:0;margin-top:1px">${a.date}</span><span style="font-size:13px;color:var(--blue);line-height:1.5">${a.title}</span></a>`;}
+    else{h+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px"><span style="font-size:11px;color:#a09890;white-space:nowrap;min-width:72px;flex-shrink:0;margin-top:1px">${a.date}</span><span style="font-size:13px;color:var(--text);line-height:1.5">${a.title}</span></div>`;}
+  });
+  h+=`</div></div>`;
+  openPopup(`${prodName} · ${stage} 关键里程碑`,h);
+}
+
+function go(view,param){
+  currentView=view;currentParam=param||"";
+  document.querySelectorAll(".top-nav-item").forEach(n=>n.classList.remove("active"));
+  const sel=document.querySelector(`.top-nav-item[data-view="${view}"]`);
+  if(sel)sel.classList.add("active");
+  const titles={overview:"首页总览",newslist:"竞对列表",products:"产品列表",company:DB.companies[currentParam]?.name||"公司",domain:DB.domains[currentParam]?.name||"产品"};
+  document.getElementById("page-title").textContent=titles[currentView]||"";
+  const topbar=document.querySelector(".topbar");
+  const main=document.querySelector(".main");
+  if(view==="overview"){
+    if(topbar)topbar.style.display="none";
+    if(main)main.style.background="#faf8fc";
+  }else{
+    if(topbar)topbar.style.display="flex";
+    if(main)main.style.background="#fff";
+  }
+  render();
+}
+
+function render(){
+  const el=document.getElementById("mainContent");
+  if(currentView==="overview")el.innerHTML=renderOverview();
+  else if(currentView==="newslist")el.innerHTML=renderNewsList();
+  else if(currentView==="products")el.innerHTML=renderProducts();
+  else if(currentView==="company")el.innerHTML=renderCompany(currentParam);
+  else if(currentView==="domain")el.innerHTML=renderDomain(currentParam);
+  el.scrollTop=0;
+}
+
+function renderOverview(){
+  const monthNews=DB.news.filter(n=>n.month===currentMonth);
+  // 焦点卡片：按tag筛选，每公司每tag最多1条，最多10条+折叠
+  const focusCandidates=monthNews.filter(n=>n.tag==='新产品发布'||n.tag==='新签客户').sort((a,b)=>b.date.localeCompare(a.date));
+  const companyTagMap={};
+  focusCandidates.forEach(n=>{const key=`${n.company}-${n.tag}`;if(!companyTagMap[key])companyTagMap[key]=n;});
+  const focusItems=Object.values(companyTagMap).sort((a,b)=>b.date.localeCompare(a.date));
+  const totalFocus=focusItems.length;
+  const top10=focusItems.slice(0,10);
+  const rest=focusItems.slice(10);
+  const buildFocusCard=n=>{
+    const c=DB.companies[n.company];
+    const isNewProduct=n.tag==='新产品发布';
+    const tagClass=isNewProduct?'blue':'green';
+    const tagText=isNewProduct?'新产品发布':'新签客户';
+    const impact=n.brief.length>80?n.brief.substring(0,80)+'...':n.brief;
+    return `<div class="focus-card" onclick="go('company','${n.company}')"><span class="focus-tag focus-tag-${tagClass}">${tagText}</span><div class="focus-title">${n.title}</div><div class="focus-impact">${impact}</div><div class="focus-footer"><span class="focus-date">${n.date} · ${c?.name||''}</span><span class="focus-action">查看简报 →</span></div></div>`;
+  };
+  const focusCardsHtml=top10.map(buildFocusCard).join('');
+  const expandHtml=rest.length?`<div style="text-align:center;margin-top:16px"><span class="view-link" onclick="this.style.display='none';document.getElementById('focus-more').style.display='grid'">展开查看全部 ${totalFocus} 条焦点 →</span></div><div class="focus-grid" id="focus-more" style="display:none;margin-top:16px">${rest.map(buildFocusCard).join('')}</div>`:'';
+  const fallbackCards=`<div class="focus-card" onclick="go('company','tezign')"><span class="focus-tag focus-tag-blue">新产品发布</span><div class="focus-title">特赞发布企业级智能体GEA：让AI进入业务流程交付结果</div><div class="focus-impact">标志特赞从内容科技向AI智能体平台转型，覆盖销售/定价/产品创新/知识管理/用户洞察/社媒增长六大模块。</div><div class="focus-footer"><span class="focus-date">2026-03-27 · 特赞</span><span class="focus-action">查看简报 →</span></div></div><div class="focus-card" onclick="go('company','tezign')"><span class="focus-tag focus-tag-green">新签客户</span><div class="focus-title">当节日营销不再只是一次campaign，GEA如何接管这家国际零食品牌的产品创新流程？</div><div class="focus-impact">GEA首个公开客户验证案例，切入消费品行业，展示AI智能体在产品创新流程中的实际落地能力。</div><div class="focus-footer"><span class="focus-date">2026-04-16 · 特赞</span><span class="focus-action">查看简报 →</span></div></div>`;
+  return `<div class="view active ov-wrap"><div class="bg-blob"></div><div class="bg-blob2"></div><div style="position:relative;z-index:2;text-align:center;width:100%;max-width:720px;padding:0 24px"><div class="ov-title">竞对情报中心</div><div style="font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6">实时追踪 ${allCompanies.length} 家竞品动态 · 覆盖 ${Object.keys(DB.domains).length} 大产品赛道</div><div class="ov-search-v2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" placeholder="搜索竞对、产品、关键词..." onkeyup="if(event.key==='Enter')handleMainSearch(this.value)"></div><div style="font-size:11px;color:var(--light);text-align:center;margin-bottom:8px">本页信息来源于各公司官网及公开渠道，仅供内部参考</div><div class="focus-section" style="margin-top:8px"><div class="sec-title" style="margin-bottom:16px"><span>本月焦点</span><div class="line"></div></div><div class="focus-grid">${focusCardsHtml||fallbackCards}</div>${expandHtml}</div></div></div>`;
+}
+
+function renderNewsList(){
+  const groups = {};
+  allCompanies.forEach(c => {
+    const track = trackNames[c.track] || c.track || '其他';
+    if (!groups[track]) groups[track] = [];
+    groups[track].push(c);
+  });
+
+  function getLatestNews(key) {
+    const news = DB.news.filter(n => n.company === key).sort((a,b) => b.date.localeCompare(a.date));
+    return news[0] || null;
+  }
+
+  const trackOrder = Object.keys(DB.domains).map(k => trackNames[k]).filter(Boolean);
+  const sortedTracks = trackOrder.filter(t => groups[t]);
+  const otherTracks = Object.keys(groups).filter(t => !trackOrder.includes(t));
+  const allTracks = [...sortedTracks, ...otherTracks];
+
+  const trackMorandi = {
+    'PIM': '#d5c5c0',
+    'DAM': '#c0c8d5',
+    '数据中台': '#c5d0c0',
+    '私域': '#d5c0c5',
+    'BI': '#c0d0d5',
+    'POS': '#d0d5c0',
+    'CRM': '#c8c0d5',
+    'OMS': '#c0d5c8'
+  };
+
+  let html = `<div class="view active"><div class="sec-title" style="margin-bottom:16px"><span>竞品对比表</span><div class="line"></div><span style="font-size:12px;color:var(--light);font-weight:400">共 ${allCompanies.length} 家</span></div>`;
+  html += `<div class="comp-table-wrap"><table class="comp-table"><thead><tr><th class="col-track">赛道</th><th class="col-name">公司</th><th style="min-width:110px">核心产品</th><th>规模</th><th>融资</th><th>营收</th><th style="min-width:140px">最新动态</th><th style="min-width:100px">来源</th><th>操作</th></tr></thead><tbody>`;
+
+  allTracks.forEach(track => {
+    const comps = groups[track];
+    const bgColor = trackMorandi[track] || '#e0e0e0';
+    const expanded = trackExpanded[track] !== false;
+
+    // 赛道折叠行
+    html += `<tr class="track-row" style="background:${bgColor}" onclick="toggleTrack('${track}')">`;
+    html += `<td class="col-track" style="background:${bgColor}"><span class="track-toggle">${expanded ? '▼' : '▶'}</span>${track}</td>`;
+    html += `<td class="col-name" style="background:${bgColor}"><span style="font-weight:600">${comps.length} 家</span></td>`;
+    html += `<td colspan="7" style="background:${bgColor};color:#7a7068;font-size:12px">点击${expanded ? '折叠' : '展开'}</td>`;
+    html += `</tr>`;
+
+    if (expanded) {
+      comps.forEach((c, idx) => {
+        const latest = getLatestNews(c.key || c.name);
+        const rowBg = idx % 2 === 0 ? '#fff' : '#faf8f6';
+
+        const isListed = c.listing && c.listing !== '—' && c.listing.includes('上市') && !c.listing.includes('未上市');
+        const fundingDisplay = isListed ? '上市' : '未上市';
+        html += `<tr class="comp-row" style="background:${rowBg}">`;
+        html += `<td class="col-track" style="background:${rowBg};border-left:3px solid ${bgColor}"></td>`;
+        html += `<td class="col-name" style="background:${rowBg}"><span class="comp-name-link" onclick="event.stopPropagation();go('company','${c.key || c.name}')">${c.name}</span></td>`;
+        html += `<td style="font-size:12px;color:#6a6662">${c.coreProduct && c.coreProduct !== '—' ? c.coreProduct : '—'}</td>`;
+        html += `<td>${c.scale && c.scale !== '—' ? `<span class="badge-scale" style="background:${bgColor};color:#5a5652">${c.scale}</span>` : '—'}</td>`;
+        html += `<td><span class="badge-funding" style="background:${bgColor};color:#5a5652">${fundingDisplay}</span></td>`;
+        html += `<td>${c.revenue && c.revenue !== '—' ? `<span class="badge-mkt" style="background:${bgColor};color:#5a5652">${c.revenue}</span>` : '—'}</td>`;
+        html += `<td>${latest ? `<div class="news-clip"><span class="news-date">${latest.date}</span><span class="news-title">${latest.title}</span></div>` : '—'}</td>`;
+        const sourceCell = c.sourceUrl ? `<a href="${c.sourceUrl}" target="_blank" style="color:#7a8fa3;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${c.source}</a>` : (c.source && c.source !== '—' ? c.source : '—');
+        html += `<td style="font-size:11px;color:#a09890;max-width:120px;white-space:normal;line-height:1.4">${sourceCell}</td>`;
+        html += `<td><span class="view-link" onclick="event.stopPropagation();go('company','${c.key || c.name}')">查看简报 →</span></td>`;
+        html += `</tr>`;
+      });
+    }
+  });
+
+  html += `</tbody></table></div></div>`;
+  return html;
+}
+
+function renderProducts(){
+  const trackMorandi={pim:'#d5c5c0',dam:'#c0c8d5',datamid:'#c5d0c0',private:'#d5c0c5',bi:'#c0d0d5',pos:'#d0d5c0',crm:'#c8c0d5',oms:'#c0d5c8'};
+  const items=Object.entries(DB.domains).map(([key,d])=>{
+    const comps=allCompanies.filter(c=>c.track===key);
+    const compCount=comps.length;
+    const leader=comps.find(c=>c.share&&c.share!=='—')||comps[0];
+    const leaderText=leader?(leader.share&&leader.share!=='—'?leader.share:leader.name):'—';
+    const bgColor=trackMorandi[key]||'#e0e0e0';
+    return `<div class="prod-card card-hover" onclick="go('domain','${key}')" style="background:${bgColor}"><div class="prod-name">${d.name}</div><div class="prod-meta"><span>${compCount} 家竞对</span><span>${leaderText}</span></div><div class="prod-desc">${d.desc||''}</div></div>`;
+  }).join('');
+  return `<div class="view active"><div class="sec-title" style="margin-bottom:16px"><span>产品赛道</span><div class="line"></div></div><div class="prod-grid">${items}</div></div>`;
+}
+
+function renderDomain(id){
+  const d=DB.domains[id];if(!d)return'<p>产品不存在</p>';
+  let quad='',anatomy='',insights='',diff='';
+  const comps=allCompanies.filter(c=>c.track===id);
+  const trackMorandi={pim:'#d5c5c0',dam:'#c0c8d5',datamid:'#c5d0c0',private:'#d5c0c5',bi:'#c0d0d5',pos:'#d0d5c0',crm:'#c8c0d5',oms:'#c0d5c8'};
+  const domainNews=DB.news.filter(n=>{const comp=allCompanies.find(c=>c.key===n.company);return comp&&comp.track===id;}).sort((a,b)=>b.date.localeCompare(a.date));
+  let matrix='';
+  if(comps.length){
+    const domainBg=trackMorandi[id]||'#e0e0e0';matrix=`<div class="section-card" style="margin-bottom:12px"><div class="sec-title"><div class="icon"></div><span>赛道竞对矩阵</span><div class="line"></div></div><div class="comp-table-wrap" style="max-height:none"><table class="comp-table"><thead><tr><th class="col-name">公司</th><th style="min-width:110px">核心产品</th><th>规模</th><th>融资</th><th>营收</th><th style="min-width:140px">最新动态</th><th style="min-width:100px">来源</th><th>操作</th></tr></thead><tbody>`;
+    comps.forEach(c=>{
+      const latestNews=DB.news.filter(n=>n.company===(c.key||c.name)).sort((a,b)=>b.date.localeCompare(a.date))[0];
+      const sourceCellDomain = c.sourceUrl ? `<a href="${c.sourceUrl}" target="_blank" style="color:#7a8fa3;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${c.source}</a>` : (c.source && c.source !== '—' ? c.source : '—');
+      const isListedDomain = c.listing && c.listing !== '—' && c.listing.includes('上市') && !c.listing.includes('未上市');
+      const fundingDisplayDomain = isListedDomain ? '上市' : '未上市';
+      matrix+=`<tr><td class="col-name" style="position:static"><span class="comp-name-link" onclick="go('company','${c.key||c.name}')">${c.name}</span></td><td style="font-size:12px;color:#6a6662">${c.coreProduct&&c.coreProduct!=='—'?c.coreProduct:'—'}</td><td>${c.scale&&c.scale!=='—'?`<span class="badge-scale" style="background:${domainBg};color:#5a5652">${c.scale}</span>`:'—'}</td><td><span class="badge-funding" style="background:${domainBg};color:#5a5652">${fundingDisplayDomain}</span></td><td>${c.revenue&&c.revenue!=='—'?`<span class="badge-mkt" style="background:${domainBg};color:#5a5652">${c.revenue}</span>`:'—'}</td><td>${latestNews?`<div class="news-clip"><span class="news-date">${latestNews.date}</span><span class="news-title">${latestNews.title}</span></div>`:'—'}</td><td style="font-size:11px;color:#a09890;max-width:120px;white-space:normal;line-height:1.4">${sourceCellDomain}</td><td><span class="view-link" onclick="go('company','${c.key||c.name}')">查看简报 →</span></td></tr>`;
+    });
+    matrix+=`</tbody></table></div></div>`;
+  }
+  const buildNewsCard=n=>{const tagClass=n.tag==='新产品发布'?'red':n.tag==='产品功能迭代'?'blue':n.tag==='新签客户'?'green':n.tag==='技术更新'?'purple':n.tag==='行业动态'?'orange':n.tag==='行业合作'?'brown':n.tag==='行业认证'?'teal':n.tag==='行业洞察'?'gray':'gray';return `<div class="news-card" onclick="openPopup('${n.title.replace(/'/g,"\\'")}',buildPopup(${n.id}))"><span class="nc-tag nc-tag-${tagClass}">${n.tag||n.category}</span><a href="${n.link}" target="_blank" class="nc-title" style="color:var(--text)" onclick="event.stopPropagation()">${n.title}</a><div class="nc-meta"><span class="nc-date">${n.date}</span><span>${DB.companies[n.company]?.name||''}</span></div></div>`;};
+  let timeline='';
+  if(domainNews.length){
+    const top10=domainNews.slice(0,10);
+    const rest=domainNews.slice(10);
+    timeline=`<div class="section-card" style="margin-bottom:12px"><div class="sec-title"><div class="icon"></div><span>赛道动态时间线</span><div class="line"></div></div><div class="news-cards">${top10.map(buildNewsCard).join('')}</div>${rest.length?`<div style="text-align:center;margin-top:12px"><span class="view-link" onclick="this.style.display='none';document.getElementById('domain-news-more-${id}').style.display='flex'">查看全部 ${domainNews.length} 条动态 →</span></div><div class="news-cards" id="domain-news-more-${id}" style="display:none;flex-direction:column;gap:8px">${rest.map(buildNewsCard).join('')}</div>`:''}</div>`;
+  }else{
+    timeline=`<div class="section-card" style="margin-bottom:12px"><div class="sec-title"><div class="icon"></div><span>赛道动态时间线</span><div class="line"></div></div><div class="tbd-box">暂无动态</div></div>`;
+  }
+  
+  // BCG Matrix for all domains
+  quad=`<div class="quadrant-wrap">
+    <div class="quadrant-bg">
+      <div class="zone-bg ztl"></div><div class="zone-bg ztr"></div><div class="zone-bg zbl"></div><div class="zone-bg zbr"></div>
+      <div class="grid-x"></div><div class="grid-y"></div>
+      <div class="zone-label zone-tl">明星<span class="z-sub">Star</span></div>
+      <div class="zone-label zone-tr">问题<span class="z-sub">Question Mark</span></div>
+      <div class="zone-label zone-bl">现金牛<span class="z-sub">Cash Cow</span></div>
+      <div class="zone-label zone-br">瘦狗<span class="z-sub">Dog</span></div>
+      <div class="axis-name axis-x-name">相对市场份额</div>
+      <div class="axis-name axis-y-name">市场增长率</div>
+      <div class="axis-end x-left">高</div><div class="axis-end x-right">低</div>
+      <div class="axis-end y-bottom">低</div><div class="axis-end y-top">高</div>`;
+  
+  if(id==='dam'){
+    quad+=`<div class="company-dot" style="left:30%;top:25%">
+      <div class="dot-circle" style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;box-shadow:0 6px 20px rgba(99,102,241,0.3),0 2px 6px rgba(0,0,0,0.1),0 0 0 4px rgba(255,255,255,0.6),0 0 0 6px rgba(99,102,241,0.1)">T</div>
+      <div class="dot-label">特赞</div>
+      <div class="dot-sub">GEA · DAM</div>
+      <div class="dot-tooltip"><div class="tooltip-title">特赞 · 明星</div><div class="tooltip-desc">DAM赛道明星企业，AI原生度高，市场增长快。</div></div>
+    </div>`;
+  }
+  
+  quad+=`</div></div>`;
+  
+  if(id!=='dam'){
+    quad+=`<div style="margin-top:20px"><div class="tbd-box">暂无数据</div></div>`;
+  }
+  
+  if(id==='dam'){
+    // BCG evaluation basis
+    quad+=`<div style="margin-top:20px">
+      <div style="background:#fff;border-radius:12px;padding:18px 22px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px">
+        <div style="font-size:13px;font-weight:600;color:#1d1d1f;margin-bottom:10px">评判依据</div>
+        <div style="font-size:12px;color:#4a5068;line-height:1.8">特赞位于<strong>明星象限</strong>，依据如下：<br>• <strong>高市场增长率</strong>：AI原生DAM赛道正处于高速增长期，特赞以GEA企业级智能体快速布局六大模块，产品迭代节奏密集。<br>• <strong>高相对市场份额</strong>：MuseDAM官网显示已有1000+企业客户，为DAM赛道头部品牌。<br><span style="color:var(--light);font-size:11px">数据来源：<a href="https://www.tezign.com" target="_blank" style="color:var(--blue);text-decoration:none">tezign.com官网</a>、<a href="http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729137&idx=1&sn=4c1c5fce4dab84f787d3eac015ee2df2&chksm=bf8cbbd16442eb2773b68e4a07438abe5f8d99fd1963bb2a63b9a48ecdc1f0679d55d4ec928e&scene=27#wechat_redirect" target="_blank" style="color:var(--blue);text-decoration:none">微信公众号公开信息</a></span></div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px 22px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px">
+        <div style="font-size:13px;font-weight:600;color:#1d1d1f;margin-bottom:10px">赛道对比</div>
+        <div style="font-size:12px;color:#4a5068;line-height:1.8">目前DAM赛道仅完成<strong>特赞</strong>一家企业的BCG定位映射，其余竞品数据待补充。</div>
+      </div>
+      <div class="tbd-box">售前应对策略 · TBD</div>
+    </div>`;
+    
+    // GEA architecture
+    anatomy=`<div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:12px;padding:18px 22px;border:1px solid #c7d2fe">
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-size:16px;font-weight:700;color:#1d1d1f">特赞 · GEA 企业级智能体</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:3px">四层架构 · 来源：tezign.com/technology</div>
+      </div>
+      <div class="arch-flow">
+        <div class="flow-layer">
+          <div class="flow-label">创意层</div>
+          <div class="flow-content">
+            <div class="flow-box core">
+              <div class="ftitle">发散推理模型</div>
+              <div class="fdesc" style="text-align:center">将企业意图拆解为多条可行路径，评估价值与可行性，进行最优编排。</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow"><div class="flow-arrow-inner">↓</div></div>
+        <div class="flow-layer">
+          <div class="flow-label">编排层</div>
+          <div class="flow-content">
+            <div class="flow-box core">
+              <div class="ftitle">模型编排</div>
+              <div class="fdesc" style="text-align:center">任务编排中枢，将业务目标转化为结构化执行流程，动态调度模型与工具。</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow"><div class="flow-arrow-inner">↓</div></div>
+        <div class="flow-layer">
+          <div class="flow-label">智能体</div>
+          <div class="flow-content">
+            <div class="flow-box core">
+              <div class="ftitle">GEAClaw 主动型智能体</div>
+              <div class="fdesc" style="text-align:center">持续监测环境变化，主动触发分析、生成与执行，不再依赖人工指令。</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow"><div class="flow-arrow-inner">↓</div></div>
+        <div class="flow-layer">
+          <div class="flow-label">技能层</div>
+          <div class="flow-content">
+            <div class="flow-box core">
+              <div class="ftitle">智能体技能库</div>
+              <div class="fdesc" style="text-align:center">模块化可复用技能，涵盖研究、生成、分析与执行，支撑复杂业务场景。</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow"><div class="flow-arrow-inner">↓</div></div>
+        <div class="flow-layer">
+          <div class="flow-label">上下文</div>
+          <div class="flow-content">
+            <div class="flow-box core">
+              <div class="ftitle">企业上下文层</div>
+              <div class="fdesc" style="text-align:center">将内容、知识与决策转化为结构化上下文，形成统一语义底座。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    
+    // Key insights
+    insights=`<div style="margin-top:8px">
+      <div style="font-size:14px;font-weight:600;color:#1d1d1f;margin-bottom:12px">关键洞察</div>
+      <div style="background:#fff;border-radius:12px;padding:18px 22px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:#7a6a8a;margin-bottom:8px">市场机遇</div>
+        <div style="font-size:12px;color:#4a5068;line-height:1.8">AI 正在发生结构性变化：从「对话式 AI (Conversational)」走向「智能体 AI (Agentic)」。AI 不再只是辅助人得到答案的 Copilot，而是开始替代人思考、决策并操作系统，对行动和结果负责。企业级智能体（Enterprise Agents）将重塑企业服务软件（SaaS），并接管大部分企业服务工作。</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px 22px;border:1px solid var(--border);box-shadow:var(--shadow)">
+        <div style="font-size:12px;font-weight:600;color:#6a7a8a;margin-bottom:8px">竞争态势</div>
+        <div style="font-size:12px;color:#4a5068;line-height:1.8">特赞以GEA企业级智能体为核心，快速布局六大业务模块。但其GEA平台发布仅1个月，客户验证案例有限。我们的优势在于：成熟模块已在大量客户中完成端到端验证，非概念阶段。</div>
+      </div>
+    </div>`;
+    
+    // Differentiation analysis
+    diff=`<div style="margin-top:8px">
+      <div style="font-size:14px;font-weight:600;color:#1d1d1f;margin-bottom:12px">差异分析</div>
+      <div style="background:#fff;border-radius:12px;padding:18px 22px;border:1px solid var(--border);box-shadow:var(--shadow)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="border-bottom:2px solid var(--border)">
+            <th style="text-align:left;padding:10px 12px;color:#6a6a6e;font-weight:600">维度</th>
+            <th style="text-align:left;padding:10px 12px;color:#8a6070;font-weight:600">特赞</th>
+            <th style="text-align:left;padding:10px 12px;color:#5a7a6a;font-weight:600">我们</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f0f1f5"><td style="padding:10px 12px;color:var(--light)">AI架构</td><td style="padding:10px 12px">AI原生（GEA智能体平台）</td><td style="padding:10px 12px">AI增强（嵌入式工作流）</td></tr>
+            <tr style="border-bottom:1px solid #f0f1f5"><td style="padding:10px 12px;color:var(--light)">产品成熟度</td><td style="padding:10px 12px">GEA发布1个月，验证初期</td><td style="padding:10px 12px">多模块已大规模验证</td></tr>
+            <tr style="border-bottom:1px solid #f0f1f5"><td style="padding:10px 12px;color:var(--light)">客户案例</td><td style="padding:10px 12px">1个公开案例（GEA）</td><td style="padding:10px 12px">大量端到端验证案例</td></tr>
+            <tr><td style="padding:10px 12px;color:var(--light)">平台化</td><td style="padding:10px 12px">六大模块整合发布</td><td style="padding:10px 12px">模块化成熟方案</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }else{anatomy='<div class="tbd-box">暂无数据</div>';insights='<div class="tbd-box">暂无数据</div>';diff='<div class="tbd-box">暂无数据</div>';}
+  const specialContent=`${quad?`<div class="section-card quadrant"><div class="sec-title"><span>赛道定位象限</span><div class="line"></div><span style="font-size:14px;color:var(--light);cursor:pointer;margin-left:4px" onclick="openQuadrantInfo()" title="查看象限说明">ⓘ</span></div>${quad}</div>`:''}${anatomy?`<div class="section-card architecture"><div class="sec-title"><span>架构解剖</span><div class="line"></div><span style="font-size:12px;padding:4px 12px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border-radius:6px;cursor:pointer;margin-left:auto" onclick="openFeaturePopup('${id}')">功能落地</span></div>${anatomy}</div>`:''}${insights?`<div class="section-card insights"><div class="sec-title"><span>关键洞察</span><div class="line"></div></div>${insights}</div>`:''}${diff?`<div class="section-card diff"><div class="sec-title"><span>差异分析</span><div class="line"></div></div>${diff}</div>`:''}`;
+  return `<div class="view active"><div class="back-link" onclick="go('products')">← 返回产品赛道</div><div class="domain-header"><h2>${d.name}</h2><p>${d.desc||''}</p></div>${matrix}${timeline}${specialContent}</div>`;
+}
+
+function renderCompany(id){
+  const c=DB.companies[id];
+  if(!c){
+    return `<div class="view active"><div class="back-link" onclick="go('newslist')">← 返回竞对列表</div><div class="domain-header"><h2>${getCompanyName(id) || '暂无数据'}</h2><p>该竞对信息正在收集中</p></div><div class="section-card news"><div class="sec-title"><div class="icon"></div><span>新闻动态</span><div class="line"></div></div><div class="tbd-box">暂无数据</div></div><div class="section-card iteration"><div class="sec-title"><div class="icon"></div><span>产品迭代周期</span><div class="line"></div></div><div class="tbd-box">暂无数据</div></div><div class="section-card finance"><div class="sec-title"><div class="icon"></div><span>财报</span><div class="line"></div></div><div class="tbd-box">暂无数据</div></div></div>`;
+  }
+  let news=DB.news.filter(n=>n.company===id&&n.month===currentMonth);
+  // 只展示对售前团队最有价值的6-7条新闻
+  const importantNewsMap={tezign:[1,2,3,4,7,105,116],shopex:[201,202,203,204,205,206,207]};
+  const importantNewsIds=importantNewsMap[id]||news.map(n=>n.id);
+  news=news.filter(n=>importantNewsIds.includes(n.id));
+  news=news.sort((a,b)=>b.date.localeCompare(a.date));
+  const productCount=news.filter(n=>n.category==='产品动态').length;
+  const clientCount=news.filter(n=>n.category==='新签客户').length;
+  const signalCount=news.filter(n=>n.category==='行业动态').length;
+  const kpiHtml=`<div style="display:flex;justify-content:center;gap:16px;margin:16px 0"><div class="kpi-pill" onclick="scrollToSec('sec-products')"><span style="width:8px;height:8px;border-radius:50%;background:#6366f1"></span><span class="kpi-num" style="color:#4f46e5">${productCount}</span><span style="font-size:11px;color:#6b7280">产品动态</span></div><div class="kpi-pill" onclick="scrollToSec('sec-clients')"><span style="width:8px;height:8px;border-radius:50%;background:#10b981"></span><span class="kpi-num" style="color:#059669">${clientCount}</span><span style="font-size:11px;color:#6b7280">新签客户</span></div><div class="kpi-pill" onclick="scrollToSec('sec-industry')"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></span><span class="kpi-num" style="color:#d97706">${signalCount}</span><span style="font-size:11px;color:#6b7280">行业动态</span></div></div>`;
+  const byCat={'产品动态':[],'新签客户':[],'行业动态':[]};
+  news.forEach(n=>{if(n.category&&byCat[n.category])byCat[n.category].push(n);});
+  let groupedNews='';
+  ['产品动态','新签客户','行业动态'].forEach((cat,idx)=>{
+    const items=byCat[cat];
+    const secId=cat==='产品动态'?'sec-products':cat==='新签客户'?'sec-clients':'sec-industry';
+    const isIndustry=cat==='行业动态';const isClient=cat==='新签客户';
+    if(isClient&&!items.length){const hist=c.historicalClients||[];if(hist.length){groupedNews+=`<div id="${secId}" class="core-table-wrap"><div class="core-table-head"><div class="ct-icon">${idx+1}</div><div class="ct-title">${cat}</div><div class="ct-count">(历史回顾)</div></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">${hist.map(cl=>`<div style="background:#fff;border:1px solid #e8e8ec;border-radius:10px;padding:14px"><div style="font-size:13px;font-weight:600;margin-bottom:4px">${cl.name}</div><div style="font-size:11px;color:#86868b">${cl.brief}</div><div style="display:flex;gap:8px;margin-top:8px"><span style="font-size:10px;padding:2px 8px;background:#e8ecf0;color:#6b7d8e;border-radius:4px">${cl.industry}</span>${cl.date!=='—'?`<span style="font-size:10px;color:#a1a1a6">${cl.date}</span>`:''}</div></div>`).join('')}</div></div>`;}return;}
+    if(!items.length)return;
+    groupedNews+=`<div id="${secId}" class="core-table-wrap"><div class="core-table-head"><div class="ct-icon">${idx+1}</div><div class="ct-title">${cat}</div><div class="ct-count">(${items.length}条)</div></div><div class="news-cards">${items.map(n=>{const tagText=n.tag||(n.category==='产品动态'?'产品发布':n.category==='行业动态'?'行业洞察':n.category);const tagClass=n.tag==='新产品发布'?'red':n.tag==='产品功能迭代'?'blue':n.tag==='新签客户'?'green':n.tag==='技术更新'?'purple':n.tag==='行业动态'?'orange':n.tag==='行业合作'?'brown':n.tag==='行业认证'?'teal':n.tag==='行业洞察'?'gray':'gray';return `<div class="news-card" onclick="openPopup('${n.title.replace(/'/g,"'")}',buildPopup(${n.id}))"><span class="nc-tag nc-tag-${tagClass}">${tagText}</span><a href="${n.link}" target="_blank" class="nc-title" style="color:var(--text)" onclick="event.stopPropagation()">${n.title}</a><div class="nc-meta"><span class="nc-date">${n.date}</span></div></div>`;}).join('')}</div></div>`;
+  });
+  
+  // Company core value proposition
+  let valueProposition='';
+  if(id==='tezign'){
+    valueProposition=`<div class="section-card insights" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>公司核心价值主张</span><div class="line"></div></div><div style="font-size:13px;color:#4a5068;line-height:1.8;padding:8px 0">致力于开发企业级智能体系统，通过自研的数据资源管理系统沉淀企业上下文，让智能体真正嵌入全球业务流程中，推动创新与增长，赋能商业与社会。</div></div>`;
+  } else {
+    valueProposition=`<div class="section-card insights" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>公司核心价值主张</span><div class="line"></div></div><div style="font-size:13px;color:#86868b;padding:20px 0;text-align:center">TBD · 待补充公司核心价值主张</div></div>`;
+  }
+  
+  // Key insights section
+  let keyInsights='';
+  if(id==='tezign'){
+    keyInsights=`<div class="section-card insights" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>关键洞察</span><div class="line"></div></div>
+    <div style="font-size:13px;color:#4a5068;line-height:1.8;padding:8px 0">
+      <div style="background:#f8f9fc;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6b7280;line-height:1.7">
+        <strong>洞察维度说明：</strong>以下从战略方向、技术路线、市场落地、品牌运营四个层面，基于公开信息对竞品动态进行梳理与提炼，供售前及销售团队参考。
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:#1d1d1f;margin-bottom:10px">核心业务洞察</div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】战略层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>特赞正从「内容科技云图」战略转型为「企业级智能体公司」。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">2026年1月密集发布多个产品动态，3月以GEA统一整合发布，对外输出六大业务模块。孵化期（2026-02-04至2026-03-23）持续输出技术/行业洞察，为产品发布做舆论铺垫。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>客户提到MuseDAM时，可引导到GEA平台战略层面，对比整体解决方案成熟度。</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】技术层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>技术叙事聚焦 AI「底层能力构建」转向「上下文掌控」。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">Contextual Retrieval、Context Graph 等概念高频出现，特赞意图「数据活水来、上下文流转」，将企业知识管理定义为竞争关键壁垒。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>我们方案的数据流转能力同样具备高度集成优势，可在POC中深度验证。</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】市场层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>客户案例停留在「营销/创新试点」阶段「未进入系统级替换」。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">截至2026-04，尚看不到ERP、DMS、OA 全量替换/深度整合的案例信息，也未看到与天猫、京东、抖音等电商平台的系统级对接信息。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>重点攻击「概念强、落地弱」的短板，突出我们方案全链路系统集成能力和平台对接能力。</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】运营层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>正在构建「产学研一体化」的品牌壁垒。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">与中欧国际工商学院联合出品研究白皮书，发布年度战略报告，创始人深度站台知名大学教育晚会。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>客户看重背书与信誉，可强调我们的行业标杆客户覆盖与交付口碑。</div>
+        </div>
+      </div>
+    </div>`;
+  } else if(id==='shopex'){
+    keyInsights=`<div class="section-card insights" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>关键洞察</span><div class="line"></div></div>
+    <div style="font-size:13px;color:#4a5068;line-height:1.8;padding:8px 0">
+      <div style="background:#f8f9fc;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6b7280;line-height:1.7">
+        <strong>洞察维度说明：</strong>以下从战略方向、技术路线、市场落地、品牌运营四个层面，基于公开信息对竞品动态进行梳理与提炼，供售前及销售团队参考。
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:#1d1d1f;margin-bottom:10px">核心业务洞察</div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】战略层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>商派正从传统电商软件服务商向「AI驱动的全渠道履约中台」战略转型。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">2026年4月密集发布OMS+AI战略升级、PIM定位为「企业AI的数据新地基」、库存中心动态状态流，并发布《2026年品牌企业AI转型全景指南》，显示其意图以AI重构核心产品线，抢占企业AI基础设施入口。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>客户提及商派时，可引导对比其AI战略与我们的AI能力差异，强调我们在Agentic架构和端到端智能体落地的成熟度。</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】技术层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>技术叙事聚焦「数据底座+智能履约」，但未见自研大模型或Agentic架构披露。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">PIM被定位为AI的数据新地基，OMS升级为全链路智能履约中枢，库存中心以动态状态流重构全渠道零售确定性。技术路线围绕OMS/PIM/库存三大模块展开，偏向传统SaaS的功能迭代而非AI原生架构。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>可攻击其AI能力为「概念包装+功能增强」，而非真正的Agentic AI；突出我们方案的AI原生架构和自主决策能力。</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】市场层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>客户验证集中在B2B出海与消费品中台，通过生态共建弥补跨境支付短板。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">晶科能源海外B2B分销平台标志其出海能力获头部新能源企业认可；菲仕兰中台项目验收验证其消费品行业深度。但与汇付天下共建「斗門」支付编排中心，说明其在跨境支付领域依赖生态合作而非自有能力。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>客户若有全球化+支付一体化需求，可强调我们自有的全链路闭环能力，对比商派的生态拼接模式。</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:600;color:#c4946a;margin-bottom:6px">【赛道】运营层</div>
+          <div style="font-size:12px;color:#4a5068;line-height:1.7;margin-bottom:8px"><strong>通过行业白皮书+标杆客户背书构建品牌壁垒，运营策略为「内容营销+客户案例」双轮驱动。</strong></div>
+          <div style="font-size:12px;color:#6a6a6e;line-height:1.6">发布《2026年品牌企业AI转型全景指南》系统输出AI转型方法论；密集释放晶科能源、菲仕兰等标杆案例，强化行业信任度。</div>
+          <div style="font-size:11px;color:#8a7a6a;margin-top:8px;padding-top:8px;border-top:1px dashed #e8e6e4"><strong>售前启示：</strong>客户看重行业背书时，可强调我们的标杆客户覆盖广度与交付口碑，直接对标其案例叙事。</div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    keyInsights=`<div class="section-card insights" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>关键洞察</span><div class="line"></div></div><div style="font-size:13px;color:#86868b;padding:20px 0;text-align:center">TBD · 待补充关键洞察</div></div>`;
+  }
+  
+  // Differentiation analysis
+  let diffAnalysis='';
+  if(id==='tezign'){
+    diffAnalysis=`<div class="section-card diff" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>差异分析</span><div class="line"></div></div>
+    <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid var(--border)">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="flex:1;min-width:120px;background:#f8f9fc;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">服务领域</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">竞品服务</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:#f8f9fc;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">我方产品</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">我方对应产品</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:#f8f9fc;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">行动建议</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">行动策略</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--light);padding:20px 0">TBD · 待补充</div>
+    </div>
+    </div>`;
+  } else if(id==='shopex'){
+    diffAnalysis=`<div class="section-card diff" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>差异分析</span><div class="line"></div></div><div style="font-size:13px;color:var(--muted);padding:20px 0;text-align:center">TBD · 待补充商派差异分析</div></div>`;
+  } else {
+    diffAnalysis=`<div class="section-card diff" style="margin-top:16px"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>差异分析</span><div class="line"></div></div><div style="font-size:13px;color:var(--muted);padding:20px 0;text-align:center">TBD · 待补充差异分析</div></div>`;
+  }
+  
+  const financeHtml=`<div class="section-card finance"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>财报</span><div class="line"></div></div><div style="font-size:13px;color:#86868b;margin-bottom:12px">该公司为非上市公司，以下为公开可查的财务相关线索：</div><div style="background:#fff;border-radius:8px;padding:14px 16px;font-size:12px;color:#a1a1a6">TBD · 待补充融资历史及公开估值信息</div></div>`;
+  const months=[...new Set(DB.news.filter(n=>n.company===id).map(n=>n.month).sort())];
+  let monthBar='';if(months.length>1){monthBar='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted);padding:4px 0">月份筛选：</span>'+months.map(m=>{const active=currentMonth===m;return '<span onclick="setCompanyMonth(&#39;'+m+'&#39;)" style="font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer;border:1px solid '+(active?'var(--text)':'var(--border)')+';background:'+(active?'var(--text)':'#fff')+';color:'+(active?'#fff':'var(--muted)')+';transition:all .15s">'+m+'</span>';}).join('')+'</div>';}else if(months.length===1){monthBar='<div style="font-size:12px;color:var(--muted);margin-bottom:16px">数据月份：'+months[0]+'</div>';}
+  return `<div class="view active"><div class="back-link" onclick="go('newslist')">← 返回竞对列表</div><div class="domain-header" style="border-left:4px solid ${c.color}"><h2>${c.name}</h2><p>分析周期：${c.period} | 官网：<a href="${c.site}" target="_blank" style="color:#1d1d1f;text-decoration:none">${c.site.replace('https://','')}</a></p><p style="margin-top:8px">${c.summary}</p></div>${monthBar}${kpiHtml}<div class="section-card news"><div class="sec-title" style="margin-top:0"><div class="icon"></div><span>新闻动态</span><div class="line"></div></div>${groupedNews.length?groupedNews:"<p style='color:var(--muted);padding:20px 0'>本月暂无动态</p>"}</div><div style="margin-top:16px">${DB.briefs[id]||''}${DB.briefs[id]?'<div style="font-size:11px;color:var(--light);text-align:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">点击里程碑节点，可查看对应的新闻原文</div>':''}</div>${keyInsights}${valueProposition}${diffAnalysis}${financeHtml}</div>`;
+}
+
+function setCompanyMonth(m){currentMonth=m;render();}
+function scrollToSec(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+function getCompanyName(id){const found=allCompanies.find(x=>x.key===id||x.name===id);return found?found.name:null;}
+
+function handleMainSearch(q){if(!q.trim())return;const lowerQ=q.toLowerCase();let companyMatch=null;for(const[key,c]of Object.entries(DB.companies)){if(c.name.includes(q)||c.en.toLowerCase().includes(lowerQ)||key===lowerQ){companyMatch={key,...c};break;}}const results=DB.news.filter(n=>n.title.toLowerCase().includes(lowerQ)||n.brief.toLowerCase().includes(lowerQ)||DB.companies[n.company].name.includes(q));if(!results.length&&!companyMatch)return openPopup("搜索无结果",`<p>未找到包含"<strong>${q}</strong>"的内容</p>`);let h='';if(companyMatch){h+=`<div style="background:#f8f9fc;border-radius:10px;padding:14px 16px;margin-bottom:16px;border-left:3px solid ${companyMatch.color}"><div style="font-size:13px;font-weight:600;color:#1d1d1f;margin-bottom:4px">直达：${companyMatch.name} ${companyMatch.en}</div><div style="font-size:12px;color:#86868b;margin-bottom:8px">${companyMatch.summary}</div><div style="display:flex;gap:10px"><a href="${companyMatch.site}" target="_blank" style="font-size:12px;color:var(--blue);text-decoration:none;font-weight:500">访问官网 →</a><span onclick="closePopup();go('company','${companyMatch.key}')" style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:500">查看简报 →</span></div></div>`;}h+=`<p style="margin-bottom:12px">找到 <strong>${results.length}</strong> 条相关动态：</p>`;results.forEach(n=>{h+=`<div class="card" style="margin-bottom:8px;padding:12px;cursor:pointer" onclick="openPopup('${n.title.replace(/'/g,"\'")}',buildPopup(${n.id}))"><div style="font-weight:500;font-size:13px;margin-bottom:4px">${n.title}</div><div style="font-size:11px;color:var(--light)">${n.date} · ${DB.companies[n.company].name}</div></div>`;});openPopup(`搜索结果：${q}`,h);}
+
+function handleSearch(e){if(e.key==="Enter"&&e.target.value.trim())search(e.target.value.trim());}
+function search(q){
+  const lowerQ=q.toLowerCase();let companyMatch=null;
+  for(const[key,c]of Object.entries(DB.companies)){if(c.name.includes(q)||c.en.toLowerCase().includes(lowerQ)||key===lowerQ){companyMatch={key,...c};break;}}
+  const results=DB.news.filter(n=>n.title.toLowerCase().includes(lowerQ)||n.brief.toLowerCase().includes(lowerQ)||DB.companies[n.company].name.includes(q));
+  if(!results.length&&!companyMatch)return openPopup("搜索无结果",`<p>未找到包含"<strong>${q}</strong>"的动态</p>`);
+  let h='';if(companyMatch){h+=`<div style="background:#f8f9fc;border-radius:10px;padding:14px 16px;margin-bottom:16px;border-left:3px solid ${companyMatch.color}"><div style="font-size:13px;font-weight:600;color:#1d1d1f;margin-bottom:4px">直达：${companyMatch.name} ${companyMatch.en}</div><div style="font-size:12px;color:#86868b;margin-bottom:8px">${companyMatch.summary}</div><div style="display:flex;gap:10px"><a href="${companyMatch.site}" target="_blank" style="font-size:12px;color:var(--blue);text-decoration:none;font-weight:500">访问官网 →</a><span onclick="closePopup();go('company','${companyMatch.key}')" style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:500">查看简报 →</span></div></div>`;}h+=`<p style="margin-bottom:12px">找到 <strong>${results.length}</strong> 条相关动态：</p>`;
+  results.forEach(n=>{h+=`<div class="card" style="margin-bottom:8px;padding:12px;cursor:pointer" onclick="openPopup('${n.title.replace(/'/g,"\'")}',buildPopup(${n.id}))"><div style="font-weight:500;font-size:13px;margin-bottom:4px">${n.title}</div><div style="font-size:11px;color:var(--light)">${n.date} · ${DB.companies[n.company].name}</div></div>`;});openPopup(`搜索结果：${q}`,h);
+}
+
+function copyNews(id){
+  const n=DB.news.find(x=>x.id===id);if(!n)return;
+  const text=`${n.title}\n${n.link}`;
+  navigator.clipboard.writeText(text).then(()=>{const toast=document.getElementById("copyToast");toast.textContent="已复制：标题+链接";toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2000);}).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);const toast=document.getElementById("copyToast");toast.textContent="已复制：标题+链接";toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2000);});
+}
+
+function buildPopup(id){
+  const n=DB.news.find(x=>x.id===id);if(!n)return"<p>未找到</p>";
+  const c=DB.companies[n.company];
+  let h=`<div class="meta-row"><span>${n.date}</span><span>${c.name}</span><span>${n.source}</span></div>`;
+  h+=`<div style="margin-bottom:10px">${n.domains.map(d=>`<span class="tag2 tag2-${d==="datamid"||d==="oms"?"blue":d==="private"?"purple":d==="bi"?"orange":d==="pos"?"teal":d==="crm"?"green":"gray"}">${DB.domains[d]?.name||d}</span>`).join("")}</div>`;
+  h+=`<p style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:12px;line-height:1.7">${n.title}</p>`;
+  h+=`<div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">${n.brief}</div>`;
+  h+=`<div class="popup-actions"><button class="popup-btn copy" onclick="copyNews(${n.id})">复制标题+链接</button><a href="${n.link}" target="_blank" class="popup-btn link" style="text-decoration:none">查看原文</a></div>`;
+  return h;
+}
+
+function openPopup(title,bodyHtml){document.getElementById("popupTitle").textContent=title;document.getElementById("popupBody").innerHTML=bodyHtml;document.getElementById("popupOverlay").classList.add("active");}
+function closePopup(e){if(e&&e.target!==document.getElementById("popupOverlay"))return;document.getElementById("popupOverlay").classList.remove("active");}
+function openSectionInfo(sectionId) {
+  const info = {
+    'news': {
+      title: '新闻动态说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>展示该公司的最新新闻动态，按 产品动态/新签客户/行业动态 分类展示。</div>
+        <div style="margin-bottom:12px"><strong>信息来源：</strong>微信公众号、公司官网、第三方媒体等公开渠道。</div>
+        <div style="margin-bottom:12px"><strong>更新频率：</strong>月度更新。</div>
+        <div><strong>使用提示：</strong>点击 KPI 导航胶囊可快速跳转到对应分类；点击新闻卡片可查看详情。</div>
+      </div>`
+    },
+    'iteration': {
+      title: '产品迭代周期说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>展示该产品线的关键里程碑节点，每个节点对应一条具体新闻中的明确动作。</div>
+        <div style="margin-bottom:12px"><strong>节点命名规则：</strong>节点文字取自新闻标题中的明确动作，禁止主观定性概括。</div>
+        <div style="margin-bottom:12px"><strong>交互说明：</strong>点击红色高亮节点（当前阶段）或黑色节点（已完成阶段）可查看关联新闻列表。</div>
+        <div><strong>相关新闻：</strong>时间轴下方的"相关新闻"展示该产品最近的 5 条动态，供快速参考。</div>
+      </div>`
+    },
+    'insights': {
+      title: '关键洞察说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>从战略/技术/市场/运营四个维度分析竞对动态。</div>
+        <div style="margin-bottom:12px"><strong>信息来源：</strong>基于本期新闻动态提炼，结合公开信息。</div>
+        <div style="margin-bottom:12px"><strong>使用提示：</strong>每个维度均包含"售前启示"，直接给出行动建议。</div>
+        <div><strong>无数据时：</strong>显示 TBD · 待补充关键洞察。</div>
+      </div>`
+    },
+    'diff': {
+      title: '差异分析说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>对比竞品与我方产品，每个差异点包含行动指向。</div>
+        <div style="margin-bottom:12px"><strong>信息来源：</strong>基于新闻动态和公开信息对比分析。</div>
+        <div style="margin-bottom:12px"><strong>使用提示：</strong>直接给出售前可跟进的问题和建议。</div>
+        <div><strong>无数据时：</strong>显示 TBD · 待补充差异分析。</div>
+      </div>`
+    },
+    'value': {
+      title: '核心价值主张说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>展示该公司的使命/愿景，一句话概括其核心价值主张。</div>
+        <div style="margin-bottom:12px"><strong>信息来源：</strong>公司官网、年报、公开采访。</div>
+        <div style="margin-bottom:12px"><strong>使用提示：</strong>理解竞对的核心定位，用于售前对比分析。</div>
+        <div><strong>无数据时：</strong>显示 TBD · 待补充公司核心价值主张。</div>
+      </div>`
+    },
+    'quadrant': {
+      title: '赛道定位象限说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>使用 BCG 矩阵分析竞对定位（明星/问题/现金牛/瘦狗）。</div>
+        <div style="margin-bottom:12px"><strong>坐标轴：</strong>横轴=相对市场份额，纵轴=市场增长率。</div>
+        <div style="margin-bottom:12px"><strong>数据来源：</strong>公开财报、市场调研、行业报告。</div>
+        <div><strong>注意：</strong>目前仅 DAM 赛道有数据，其他赛道待补充。</div>
+      </div>`
+    },
+    'architecture': {
+      title: '架构解剖说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>展示该产品的技术架构分层，每层包含核心能力描述。</div>
+        <div style="margin-bottom:12px"><strong>信息来源：</strong>技术白皮书、官方文档、产品发布会。</div>
+        <div style="margin-bottom:12px"><strong>使用提示：</strong>理解竞对技术路线，用于售前技术对比。</div>
+        <div><strong>注意：</strong>目前仅 DAM 赛道有数据，其他赛道待补充。</div>
+      </div>`
+    },
+    'timeline': {
+      title: '赛道动态时间线说明',
+      body: `<div style="line-height:1.8;font-size:13px;color:var(--text)">
+        <div style="margin-bottom:12px"><strong>功能说明：</strong>展示该赛道所有公司的全部新闻，按时间倒序排列。</div>
+        <div style="margin-bottom:12px"><strong>信息来源：</strong>微信公众号、官网等公开渠道。</div>
+        <div style="margin-bottom:12px"><strong>使用提示：</strong>超过 10 条可展开，点击标题可查看原文。</div>
+        <div><strong>无数据时：</strong>显示"暂无动态" TBD 框。</div>
+      </div>`
+    }
+  };
+  const section = info[sectionId];
+  if (section) openPopup(section.title, section.body);
+}
+
+function openQuadrantInfo(){const html=`<div style="line-height:1.8;font-size:13px;color:var(--text)"><div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px">横轴 · 相对市场份额</div><div style="color:var(--muted)">衡量企业在该产品赛道中的相对市场占有率。从左（高市场份额 / 领导者）到右（低市场份额 / 挑战者）。</div></div><div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px">纵轴 · 市场增长率</div><div style="color:var(--muted)">衡量该产品赛道的整体增长潜力。从下（低增长 / 成熟市场）到上（高增长 / 新兴市场）。</div></div><div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px">四象限含义（BCG Matrix）</div><div style="color:var(--muted)"><strong>明星（Star）：</strong>高增长 + 高份额，需持续投入以巩固地位。<br><strong>问题（Question Mark）：</strong>高增长 + 低份额，需判断是否加大投入。<br><strong>现金牛（Cash Cow）：</strong>低增长 + 高份额，稳定现金流来源。<br><strong>瘦狗（Dog）：</strong>低增长 + 低份额，考虑收缩或退出。</div></div><div style="font-size:12px;color:var(--light);padding-top:12px;border-top:1px solid var(--border)">象限位置为综合判断，非精确量化结果，建议结合具体 POC 场景验证。</div></div>`;openPopup("BCG矩阵说明",html);}
+
+function openIterationInfo(){
+  const html=`<div style="line-height:1.8;font-size:13px;color:var(--text)"><div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px">产品迭代周期说明</div><div style="color:var(--muted)">本模块追踪竞对各产品线的关键里程碑节点，每个节点对应一条具体新闻中的明确动作。<br><br><strong>如何解读：</strong><br>• <span style="color:#ef4444">红色高亮</span>：当前所处里程碑（最新一条具有里程碑意义的新闻）<br>• <span style="color:#1d1d1f">黑色实心</span>：已完成的里程碑<br>• 点击节点：查看该里程碑对应的新闻原文（含标题、日期、原文链接）<br><br><strong>节点命名规则：</strong><br>每个里程碑的文字均取自新闻标题中的明确动作，禁止主观定性概括。例如「发布 GEA」来自《特赞发布企业级智能体 GEA...》，「签约国际零食品牌」来自《GEA 如何接管这家国际零食品牌...》。</div></div></div>`;
+  openPopup("产品迭代周期说明",html);
+}
+
+function openFeaturePopup(domainId){
+  let html='';
+  if(domainId==='dam'){
+    html=`<div style="line-height:1.8;font-size:13px;color:var(--text)"><div style="font-weight:700;margin-bottom:10px;font-size:14px">特赞 GEA · 功能落地清单</div><div style="margin-bottom:12px"><div style="font-weight:600;color:#6366f1;margin-bottom:4px">内容生成</div><div style="color:var(--muted)">• AI 生成商品主图、详情页、Banner 素材<br>• 自动适配多平台尺寸（天猫/京东/抖音）<br>• 基于品牌 VI 的包装设计方案生成</div><div style="font-size:11px;color:var(--light);margin-top:4px">来源：<a href="https://www.tezign.com" target="_blank" style="color:var(--blue);text-decoration:none">tezign.com官网</a>、<a href="http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728027&idx=1&sn=0f8f9911578ea5f9202361a28c738779&chksm=bf3e64aa89f84d89f2bea351a93713c752b8be968a30a1c3ffe3ba87e32b5cc18f1ca9b88096&scene=27#wechat_redirect" target="_blank" style="color:var(--blue);text-decoration:none">MuseDAM发布文章</a></div></div><div style="margin-bottom:12px"><div style="font-weight:600;color:#6366f1;margin-bottom:4px">产品创新</div><div style="color:var(--muted)">• 新品概念验证与口味/配方趋势预测<br>• 竞品包装分析与差异化建议<br>• 消费者洞察驱动的 SKU 优化</div><div style="font-size:11px;color:var(--light);margin-top:4px">来源：<a href="http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650729137&idx=1&sn=4c1c5fce4dab84f787d3eac015ee2df2&chksm=bf8cbbd16442eb2773b68e4a07438abe5f8d99fd1963bb2a63b9a48ecdc1f0679d55d4ec928e&scene=27#wechat_redirect" target="_blank" style="color:var(--blue);text-decoration:none">GEA发布文章</a></div></div><div style="margin-bottom:12px"><div style="font-weight:600;color:#6366f1;margin-bottom:4px">知识管理</div><div style="color:var(--muted)">• 品牌资产集中管理（MuseDAM）<br>• 营销素材智能检索与复用<br>• 跨部门创意协作与审批流程</div><div style="font-size:11px;color:var(--light);margin-top:4px">来源：<a href="http://mp.weixin.qq.com/s?__biz=MjM5NTMzNzg3NA==&mid=2650728027&idx=1&sn=0f8f9911578ea5f9202361a28c738779&chksm=bf3e64aa89f84d89f2bea351a93713c752b8be968a30a1c3ffe3ba87e32b5cc18f1ca9b88096&scene=27#wechat_redirect" target="_blank" style="color:var(--blue);text-decoration:none">MuseDAM发布文章</a>、<a href="https://www.musedam.cc/zh-CN" target="_blank" style="color:var(--blue);text-decoration:none">musedam.cc官网</a></div></div></div>`;
+  }else{
+    html='<p style="color:var(--muted)">该赛道功能落地清单待补充。</p>';
+  }
+  openPopup("功能落地",html);
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  const topbar=document.querySelector(".topbar");
+  const main=document.querySelector(".main");
+  if(topbar)topbar.style.display="none";
+  if(main)main.style.background="#faf8fc";
+  render();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closePopup();});
+</script>
+</body>
+</html>
